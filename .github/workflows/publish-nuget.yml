@@ -1,0 +1,65 @@
+name: Publish NuGet
+
+on:
+  release:
+    types:
+      - published
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      package_version:
+        description: "NuGet package version, for example 0.1.0-alpha.1"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Pack and publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Resolve package version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.package_version }}"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
+
+          echo "PACKAGE_VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Restore
+        run: dotnet restore TinyValidations.sln
+
+      - name: Build
+        run: dotnet build TinyValidations.sln --configuration Release --no-restore /p:PackageVersion=${{ env.PACKAGE_VERSION }}
+
+      - name: Test
+        run: dotnet test TinyValidations.sln --configuration Release --no-build
+
+      - name: Pack
+        run: dotnet pack src/TinyValidations/TinyValidations.csproj --configuration Release --no-build --output artifacts/packages /p:PackageVersion=${{ env.PACKAGE_VERSION }}
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package
+          path: artifacts/packages/*.nupkg
+
+      - name: Publish to NuGet
+        run: dotnet nuget push "artifacts/packages/*.nupkg" --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
