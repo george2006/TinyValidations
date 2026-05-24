@@ -27,6 +27,20 @@ var result = await validator.ValidateAsync(command, cancellationToken);
 
 A TinyDispatcher behavior or middleware package can call this before invoking the handler.
 
+The ASP.NET sample in `samples/TinyDispatcherAspNetCore` shows the intended shape using TinyDispatcher `1.1.0`:
+
+```csharp
+services.UseTinyValidations();
+services.AddTransient(typeof(TinyValidationMiddleware<>));
+
+services.UseTinyDispatcher<AppContext>(tiny =>
+{
+    tiny.UseGlobalMiddleware(typeof(TinyValidationMiddleware<>));
+});
+```
+
+The sample middleware throws a custom validation exception when validation fails. An ASP.NET middleware catches that exception and writes a standard validation problem details response.
+
 ## Planned Package Shape
 
 The likely package split is:

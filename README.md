@@ -142,12 +142,17 @@ The current package exposes the validation primitives. The TinyDispatcher integr
 
 Read more in [TinyDispatcher integration](docs/tinydispatcher.md).
 
+See [`samples/TinyDispatcherAspNetCore`](samples/TinyDispatcherAspNetCore) for a minimal ASP.NET sample that wires TinyValidations into TinyDispatcher middleware and maps validation failures to problem details.
+
+See [`samples/MediatRAspNetCore`](samples/MediatRAspNetCore) for the same application shape using a MediatR pipeline behavior.
+
 ## Documentation
 
 - [Getting started](docs/getting-started.md)
 - [Rules](docs/rules.md)
 - [Custom rules](docs/custom-rules.md)
 - [TinyDispatcher integration](docs/tinydispatcher.md)
+- [MediatR integration](docs/mediatr.md)
 - [Architecture](docs/architecture.md)
 - [Roadmap](docs/roadmap.md)
 
