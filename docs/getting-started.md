@@ -4,10 +4,10 @@ This guide shows the basic TinyValidations flow.
 
 ## Install
 
-TinyValidations is a .NET library package. Once published, install it from NuGet:
+TinyValidations is currently published as an alpha package:
 
 ```bash
-dotnet add package TinyValidations
+dotnet add package TinyValidations --version 0.1.0-alpha.1
 ```
 
 For local development, reference the project directly.

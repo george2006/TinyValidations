@@ -33,7 +33,13 @@ The goal is not to be a huge validation framework. The goal is calm command vali
 
 ## Quick start
 
-Install the package, then register TinyValidations:
+Install the alpha package:
+
+```bash
+dotnet add package TinyValidations --version 0.1.0-alpha.1
+```
+
+Then register TinyValidations:
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;

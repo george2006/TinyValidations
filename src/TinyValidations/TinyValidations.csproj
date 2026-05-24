@@ -2,8 +2,15 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <PackageId>TinyValidations</PackageId>
-    <Authors>Jorge Durban Antuñano</Authors>
-    <Description>Small compile-time validation for application-layer use cases.</Description>
+    <Version>0.1.0-alpha.1</Version>
+    <Authors>Jorge Durban Antunano</Authors>
+    <Description>Small compile-time validation for application-layer commands, with generated runners, DI-friendly custom rules, and pipeline-friendly validation primitives.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/george2006/TinyValidations</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/george2006/TinyValidations</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>validation;source-generator;dotnet;dependency-injection;aspnetcore;mediatr;tinydispatcher</PackageTags>
+    <PackageReleaseNotes>First alpha release of TinyValidations. Includes compile-time validation declarations, generated validation runners, built-in rules, DI-friendly async custom rules, generator-backed Requires rules, and ASP.NET samples for TinyDispatcher and MediatR.</PackageReleaseNotes>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
