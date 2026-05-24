@@ -27,6 +27,7 @@ The goal is not to be a huge validation framework. The goal is calm command vali
 - no reflection-based rule discovery at runtime
 - no runtime expression parsing for built-in rules
 - direct generated checks for common rules
+- generator-native requirement rules for simple application-specific checks
 - DI-friendly custom async rules for real business checks
 - a small API that fits application-layer code
 
@@ -127,6 +128,17 @@ public sealed class UniqueEmailRule : IAsyncValidationRule<CreateUser>
 
 More detail is in [Custom rules](docs/custom-rules.md).
 
+For static generator-native checks, use `Requires`:
+
+```csharp
+rules.Requires(
+    x => x.OrderNumber,
+    OrderNumberRequirements.HasOrderPrefix,
+    "Order number must start with ORD-.");
+```
+
+Read more in [Extending TinyValidations](docs/extending.md).
+
 ## TinyDispatcher
 
 TinyValidations is designed to become the validation companion for TinyDispatcher.
@@ -151,6 +163,7 @@ See [`samples/MediatRAspNetCore`](samples/MediatRAspNetCore) for the same applic
 - [Getting started](docs/getting-started.md)
 - [Rules](docs/rules.md)
 - [Custom rules](docs/custom-rules.md)
+- [Extending TinyValidations](docs/extending.md)
 - [TinyDispatcher integration](docs/tinydispatcher.md)
 - [MediatR integration](docs/mediatr.md)
 - [Architecture](docs/architecture.md)

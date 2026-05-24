@@ -210,6 +210,78 @@ public sealed class CreateUser
     }
 
     [Fact]
+    public void Generates_static_requires_rule_call()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateOrderValidation : IValidation<CreateOrder>
+{
+    public void Define(ValidationRules<CreateOrder> rules)
+    {
+        rules.Requires(x => x.OrderNumber, OrderNumberRequirements.HasOrderPrefix, "Order number must start with ORD-.");
+    }
+}
+
+public static class OrderNumberRequirements
+{
+    public static bool HasOrderPrefix(string? value)
+    {
+        return value is not null && value.StartsWith("ORD-");
+    }
+}
+
+public sealed class CreateOrder
+{
+    public string? OrderNumber { get; init; }
+}
+""";
+
+        var result = RunGenerator(source);
+        var generated = Assert.Single(result.GeneratedTrees);
+        var text = generated.GetText().ToString();
+
+        Assert.Empty(result.Diagnostics);
+        Assert.Contains("if (!global::OrderNumberRequirements.HasOrderPrefix(instance.OrderNumber))", text);
+        Assert.Contains("errors.Add(\"OrderNumber\", \"Order number must start with ORD-.\");", text);
+    }
+
+    [Fact]
+    public void Reports_diagnostic_when_requires_method_is_not_static()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateOrderValidation : IValidation<CreateOrder>
+{
+    public void Define(ValidationRules<CreateOrder> rules)
+    {
+        var requirements = new OrderNumberRequirements();
+        rules.Requires(x => x.OrderNumber, requirements.HasOrderPrefix, "Order number must start with ORD-.");
+    }
+}
+
+public sealed class OrderNumberRequirements
+{
+    public bool HasOrderPrefix(string? value)
+    {
+        return value is not null && value.StartsWith("ORD-");
+    }
+}
+
+public sealed class CreateOrder
+{
+    public string? OrderNumber { get; init; }
+}
+""";
+
+        var result = RunGenerator(source);
+        var diagnostic = Assert.Single(result.Diagnostics);
+
+        Assert.Equal("TV0004", diagnostic.Id);
+    }
+
+    [Fact]
     public void Reports_diagnostic_when_custom_rule_type_is_invalid()
     {
         var source = """

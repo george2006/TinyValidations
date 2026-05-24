@@ -1,6 +1,6 @@
 # Custom Rules
 
-Custom rules are for validation that cannot be expressed as a small built-in check.
+Custom rules are for validation that cannot be expressed as a small built-in check or a static requirement.
 
 Use them for:
 
@@ -69,3 +69,5 @@ errors.Add(nameof(CreateUser.Email), "Email is already registered.");
 ```
 
 The first argument is the member name. The second argument is the user-facing message.
+
+For generator-native static checks, see [Extending TinyValidations](extending.md).

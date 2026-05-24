@@ -8,7 +8,8 @@ namespace TinyValidations.SourceGen.Model
             string memberAccess,
             string argument,
             string message,
-            string customRuleType)
+            string customRuleType,
+            string requirementMethod = "")
         {
             Kind = kind;
             MemberPath = memberPath;
@@ -16,6 +17,7 @@ namespace TinyValidations.SourceGen.Model
             Argument = argument;
             Message = message;
             CustomRuleType = customRuleType;
+            RequirementMethod = requirementMethod;
         }
 
         public RuleKind Kind { get; }
@@ -29,5 +31,7 @@ namespace TinyValidations.SourceGen.Model
         public string Message { get; }
 
         public string CustomRuleType { get; }
+
+        public string RequirementMethod { get; }
     }
 }

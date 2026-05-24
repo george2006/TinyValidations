@@ -78,4 +78,5 @@ if (!result.IsValid)
 
 - [Rules](rules.md)
 - [Custom rules](custom-rules.md)
+- [Extending TinyValidations](extending.md)
 - [TinyDispatcher integration](tinydispatcher.md)

@@ -29,5 +29,7 @@ public sealed class ValidationRules<T>
 
     public void Matches(Expression<Func<T, string?>> member, string pattern, string? message = null) { }
 
+    public void Requires<TValue>(Expression<Func<T, TValue>> member, Func<TValue, bool> requirement, string message) { }
+
     public void Use<TRule>() where TRule : IAsyncValidationRule<T> { }
 }

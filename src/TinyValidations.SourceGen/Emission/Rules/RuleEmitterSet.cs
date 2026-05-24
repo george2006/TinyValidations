@@ -17,6 +17,7 @@ namespace TinyValidations.SourceGen.Emission.Rules
             new TextLengthAtMostRuleEmitter(),
             new ComparableRuleEmitter(),
             new MatchesRuleEmitter(),
+            new RequiresRuleEmitter(),
             new CustomRuleEmitter()
         };
 
