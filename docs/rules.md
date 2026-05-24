@@ -81,6 +81,16 @@ rules.Matches(x => x.Code, "^[A-Z]{3}$");
 
 Empty values are ignored by `Matches`. Use `Required` or `HasText` when the field must be present.
 
+## Requires
+
+Validates a member with a static requirement method.
+
+```csharp
+rules.Requires(x => x.OrderNumber, OrderNumberRequirements.HasOrderPrefix, "Order number must start with ORD-.");
+```
+
+Requirement rules are generated as direct static method calls. See [Extending TinyValidations](extending.md).
+
 ## Custom Messages
 
 Most rules accept an optional message.

@@ -19,6 +19,7 @@ namespace TinyValidations.SourceGen.Analysis.Rules
             ["Below"] = RuleKind.Below,
             ["AtMost"] = RuleKind.AtMost,
             ["Matches"] = RuleKind.Matches,
+            ["Requires"] = RuleKind.Requires,
             ["Use"] = RuleKind.Use
         };
 

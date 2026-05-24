@@ -14,6 +14,7 @@ namespace TinyValidations.SourceGen.Model
         Below,
         AtMost,
         Matches,
+        Requires,
         Use
     }
 }

@@ -52,6 +52,18 @@ public sealed class ValidationBehaviorTests
     }
 
     [Fact]
+    public async Task Requires_rules_call_static_requirement_methods()
+    {
+        var validator = BuildValidator();
+        var command = new CreateOrder("bad");
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.False(result.IsValid);
+        AssertHasError(result, nameof(CreateOrder.OrderNumber), "Order number must start with ORD-.");
+    }
+
+    [Fact]
     public async Task Registration_is_idempotent_for_generated_runners()
     {
         var services = new ServiceCollection();
@@ -229,6 +241,24 @@ public sealed class ShipPackageTrackingValidation : IValidation<ShipPackage>
     public void Define(ValidationRules<ShipPackage> rules)
     {
         rules.Matches(x => x.TrackingCode, "^[A-Z]{2}[0-9]{4}$");
+    }
+}
+
+public sealed record CreateOrder(string OrderNumber);
+
+public sealed class CreateOrderValidation : IValidation<CreateOrder>
+{
+    public void Define(ValidationRules<CreateOrder> rules)
+    {
+        rules.Requires(x => x.OrderNumber, OrderNumberRequirements.HasOrderPrefix, "Order number must start with ORD-.");
+    }
+}
+
+public static class OrderNumberRequirements
+{
+    public static bool HasOrderPrefix(string? value)
+    {
+        return value is not null && value.StartsWith("ORD-", StringComparison.Ordinal);
     }
 }
 
