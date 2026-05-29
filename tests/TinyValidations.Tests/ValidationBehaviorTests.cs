@@ -27,6 +27,27 @@ public sealed class ValidationBehaviorTests
     }
 
     [Fact]
+    public async Task Built_in_rules_use_custom_messages()
+    {
+        var validator = BuildValidator();
+        var command = new CreateProfileWithCustomMessages(
+            string.Empty,
+            "A",
+            17,
+            "abc",
+            Array.Empty<string>());
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.False(result.IsValid);
+        AssertHasError(result, nameof(CreateProfileWithCustomMessages.Email), "Please provide an email.");
+        AssertHasError(result, nameof(CreateProfileWithCustomMessages.DisplayName), "Display name is too short.");
+        AssertHasError(result, nameof(CreateProfileWithCustomMessages.Age), "Adults only.");
+        AssertHasError(result, nameof(CreateProfileWithCustomMessages.Code), "Code must be three uppercase letters.");
+        AssertHasError(result, nameof(CreateProfileWithCustomMessages.Roles), "Choose at least one role.");
+    }
+
+    [Fact]
     public async Task Custom_rules_are_resolved_from_dependency_injection()
     {
         var validator = BuildValidator(services => services.AddScoped<ReservedTeamNameStore>());
@@ -162,6 +183,25 @@ public sealed class ValidationBehaviorTests
 
         Assert.Fail("Expected scoped rule error.");
         return string.Empty;
+    }
+}
+
+public sealed record CreateProfileWithCustomMessages(
+    string Email,
+    string DisplayName,
+    int Age,
+    string Code,
+    IReadOnlyCollection<string> Roles);
+
+public sealed class CreateProfileWithCustomMessagesValidation : IValidation<CreateProfileWithCustomMessages>
+{
+    public void Define(ValidationRules<CreateProfileWithCustomMessages> rules)
+    {
+        rules.Required(x => x.Email, "Please provide an email.");
+        rules.TextLengthAtLeast(x => x.DisplayName, 2, "Display name is too short.");
+        rules.AtLeast(x => x.Age, 18, "Adults only.");
+        rules.Matches(x => x.Code, "^[A-Z]{3}$", "Code must be three uppercase letters.");
+        rules.HasItems(x => x.Roles, "Choose at least one role.");
     }
 }
 
