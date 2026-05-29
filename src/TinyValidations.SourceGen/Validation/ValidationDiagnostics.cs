@@ -23,7 +23,7 @@ namespace TinyValidations.SourceGen.Validation
         public static readonly DiagnosticDescriptor UnsupportedSelector = new DiagnosticDescriptor(
             "TV0003",
             "Validation rule selector is not supported",
-            "Validation rule selector '{0}' must be a simple member access expression",
+            "Validation rule selector '{0}' must be a simple member path",
             "TinyValidations",
             DiagnosticSeverity.Warning,
             true);

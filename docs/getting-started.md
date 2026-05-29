@@ -4,10 +4,10 @@ This guide shows the basic TinyValidations flow.
 
 ## Install
 
-TinyValidations is currently published as an alpha package:
+TinyValidations is currently published as a beta package:
 
 ```bash
-dotnet add package TinyValidations --version 0.1.0-alpha.1
+dotnet add package TinyValidations --version 0.1.0-beta.1
 ```
 
 For local development, reference the project directly.

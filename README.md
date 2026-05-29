@@ -4,7 +4,7 @@ TinyValidations is a small compile-time validation library for application-layer
 
 It was built for TinyDispatcher-style applications first: define a command, define its validation, register services, and let generated code do the boring work before the handler runs. Native ASP.NET integration is planned, but the core package is intentionally host-agnostic.
 
-> Status: experimental alpha. The public shape is small, but diagnostics, packaging, and host integrations are still evolving.
+> Status: beta. The public shape is small and usable, but host integrations and some advanced syntax support are still evolving.
 
 ## Contents
 
@@ -33,10 +33,10 @@ The goal is not to be a huge validation framework. The goal is calm command vali
 
 ## Quick start
 
-Install the alpha package:
+Install the beta package:
 
 ```bash
-dotnet add package TinyValidations --version 0.1.0-alpha.1
+dotnet add package TinyValidations --version 0.1.0-beta.1
 ```
 
 Then register TinyValidations:
@@ -179,8 +179,8 @@ See [`samples/MediatRAspNetCore`](samples/MediatRAspNetCore) for the same applic
 
 TinyValidations is intentionally small and currently early.
 
-- Source generator diagnostics are minimal.
-- Supported rule declaration shapes are narrow.
+- Source generator diagnostics are intentionally focused.
+- Supported rule declaration shapes are intentionally narrow.
 - Generated registration uses the current bootstrap mechanism and may change.
 - Native ASP.NET integration is planned but not implemented yet.
 - Tests cover runtime behavior, generated behavior, diagnostics, and multi-assembly contributions.

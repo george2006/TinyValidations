@@ -1,6 +1,6 @@
 # Roadmap
 
-TinyValidations is experimental alpha software.
+TinyValidations is beta software.
 
 This roadmap describes the expected direction, not a compatibility promise.
 
