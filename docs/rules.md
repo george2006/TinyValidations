@@ -11,6 +11,16 @@ public void Define(ValidationRules<CreateUser> rules)
 
 Built-in rules are generated as direct C# checks.
 
+Member selectors can target direct members or nested member paths:
+
+```csharp
+rules.Required(x => x.Email);
+rules.Required(x => x.Profile.Email);
+```
+
+Nested selectors report dotted member paths, such as `Profile.Email`.
+Intermediate null values are handled as missing nested values.
+
 ## Required
 
 Requires the value to be present. For strings, whitespace is treated as missing.

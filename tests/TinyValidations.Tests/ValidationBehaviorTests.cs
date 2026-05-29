@@ -27,6 +27,50 @@ public sealed class ValidationBehaviorTests
     }
 
     [Fact]
+    public async Task Built_in_rules_use_custom_messages()
+    {
+        var validator = BuildValidator();
+        var command = new CreateProfileWithCustomMessages(
+            string.Empty,
+            "A",
+            17,
+            "abc",
+            Array.Empty<string>());
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.False(result.IsValid);
+        AssertHasError(result, nameof(CreateProfileWithCustomMessages.Email), "Please provide an email.");
+        AssertHasError(result, nameof(CreateProfileWithCustomMessages.DisplayName), "Display name is too short.");
+        AssertHasError(result, nameof(CreateProfileWithCustomMessages.Age), "Adults only.");
+        AssertHasError(result, nameof(CreateProfileWithCustomMessages.Code), "Code must be three uppercase letters.");
+        AssertHasError(result, nameof(CreateProfileWithCustomMessages.Roles), "Choose at least one role.");
+    }
+
+    [Fact]
+    public async Task Remaining_built_in_rules_return_validation_errors()
+    {
+        var validator = BuildValidator();
+        var command = new ConfigureProduct(
+            string.Empty,
+            null,
+            "TOO-LONG",
+            0,
+            11,
+            6);
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.False(result.IsValid);
+        AssertHasError(result, nameof(ConfigureProduct.Name), "Name must contain text.");
+        AssertHasError(result, nameof(ConfigureProduct.Category), "Category must not be null.");
+        AssertHasError(result, nameof(ConfigureProduct.Code), "Code must contain at most 3 characters.");
+        AssertHasError(result, nameof(ConfigureProduct.MinimumQuantity), "MinimumQuantity must be above 0.");
+        AssertHasError(result, nameof(ConfigureProduct.DiscountPercent), "DiscountPercent must be below 10.");
+        AssertHasError(result, nameof(ConfigureProduct.Rating), "Rating must be at most 5.");
+    }
+
+    [Fact]
     public async Task Custom_rules_are_resolved_from_dependency_injection()
     {
         var validator = BuildValidator(services => services.AddScoped<ReservedTeamNameStore>());
@@ -49,6 +93,30 @@ public sealed class ValidationBehaviorTests
         Assert.False(result.IsValid);
         AssertHasError(result, nameof(ShipPackage.Address), "Address is required.");
         AssertHasError(result, nameof(ShipPackage.TrackingCode), "TrackingCode has an invalid format.");
+    }
+
+    [Fact]
+    public async Task Nested_member_rules_return_dotted_member_paths()
+    {
+        var validator = BuildValidator();
+        var command = new UpdateAccount(new AccountProfile(string.Empty));
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.False(result.IsValid);
+        AssertHasError(result, "Profile.Email", "Profile email is required.");
+    }
+
+    [Fact]
+    public async Task Nested_member_rules_handle_null_intermediate_members()
+    {
+        var validator = BuildValidator();
+        var command = new UpdateAccount(null!);
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.False(result.IsValid);
+        AssertHasError(result, "Profile.Email", "Profile email is required.");
     }
 
     [Fact]
@@ -165,6 +233,46 @@ public sealed class ValidationBehaviorTests
     }
 }
 
+public sealed record CreateProfileWithCustomMessages(
+    string Email,
+    string DisplayName,
+    int Age,
+    string Code,
+    IReadOnlyCollection<string> Roles);
+
+public sealed class CreateProfileWithCustomMessagesValidation : IValidation<CreateProfileWithCustomMessages>
+{
+    public void Define(ValidationRules<CreateProfileWithCustomMessages> rules)
+    {
+        rules.Required(x => x.Email, "Please provide an email.");
+        rules.TextLengthAtLeast(x => x.DisplayName, 2, "Display name is too short.");
+        rules.AtLeast(x => x.Age, 18, "Adults only.");
+        rules.Matches(x => x.Code, "^[A-Z]{3}$", "Code must be three uppercase letters.");
+        rules.HasItems(x => x.Roles, "Choose at least one role.");
+    }
+}
+
+public sealed record ConfigureProduct(
+    string Name,
+    string? Category,
+    string Code,
+    int MinimumQuantity,
+    int DiscountPercent,
+    int Rating);
+
+public sealed class ConfigureProductValidation : IValidation<ConfigureProduct>
+{
+    public void Define(ValidationRules<ConfigureProduct> rules)
+    {
+        rules.HasText(x => x.Name);
+        rules.NotNull(x => x.Category);
+        rules.TextLengthAtMost(x => x.Code, 3);
+        rules.Above(x => x.MinimumQuantity, 0);
+        rules.Below(x => x.DiscountPercent, 10);
+        rules.AtMost(x => x.Rating, 5);
+    }
+}
+
 public sealed record CreateProfile(
     string Email,
     string DisplayName,
@@ -241,6 +349,18 @@ public sealed class ShipPackageTrackingValidation : IValidation<ShipPackage>
     public void Define(ValidationRules<ShipPackage> rules)
     {
         rules.Matches(x => x.TrackingCode, "^[A-Z]{2}[0-9]{4}$");
+    }
+}
+
+public sealed record UpdateAccount(AccountProfile Profile);
+
+public sealed record AccountProfile(string Email);
+
+public sealed class UpdateAccountValidation : IValidation<UpdateAccount>
+{
+    public void Define(ValidationRules<UpdateAccount> rules)
+    {
+        rules.Required(x => x.Profile.Email, "Profile email is required.");
     }
 }
 

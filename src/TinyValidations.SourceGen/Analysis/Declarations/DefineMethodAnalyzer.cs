@@ -21,7 +21,7 @@ namespace TinyValidations.SourceGen.Analysis.Declarations
         {
             var defineMethod = declaration.Members
                 .OfType<MethodDeclarationSyntax>()
-                .FirstOrDefault(IsDefineMethod);
+                .FirstOrDefault(method => IsDefineMethod(semanticModel, method, commandType, validationRules));
 
             if (defineMethod == null)
             {
@@ -58,19 +58,71 @@ namespace TinyValidations.SourceGen.Analysis.Declarations
                 rules);
         }
 
-        private static bool IsDefineMethod(MethodDeclarationSyntax method)
+        private static bool IsDefineMethod(
+            SemanticModel semanticModel,
+            MethodDeclarationSyntax method,
+            INamedTypeSymbol commandType,
+            INamedTypeSymbol validationRules)
         {
             if (method.Identifier.ValueText != "Define")
             {
                 return false;
             }
 
-            return HasSingleParameter(method);
+            if (!HasSingleParameter(method))
+            {
+                return false;
+            }
+
+            if (!ReturnsVoid(semanticModel, method))
+            {
+                return false;
+            }
+
+            return HasValidationRulesParameter(semanticModel, method, commandType, validationRules);
         }
 
         private static bool HasSingleParameter(MethodDeclarationSyntax method)
         {
             return method.ParameterList.Parameters.Count == 1;
+        }
+
+        private static bool ReturnsVoid(SemanticModel semanticModel, MethodDeclarationSyntax method)
+        {
+            var symbol = semanticModel.GetDeclaredSymbol(method);
+            if (!(symbol is IMethodSymbol methodSymbol))
+            {
+                return false;
+            }
+
+            return methodSymbol.ReturnsVoid;
+        }
+
+        private static bool HasValidationRulesParameter(
+            SemanticModel semanticModel,
+            MethodDeclarationSyntax method,
+            INamedTypeSymbol commandType,
+            INamedTypeSymbol validationRules)
+        {
+            var parameter = method.ParameterList.Parameters[0];
+            var type = semanticModel.GetTypeInfo(parameter.Type!).Type;
+
+            if (!(type is INamedTypeSymbol namedType))
+            {
+                return false;
+            }
+
+            if (!SymbolEqualityComparer.Default.Equals(namedType.OriginalDefinition, validationRules))
+            {
+                return false;
+            }
+
+            if (namedType.TypeArguments.Length != 1)
+            {
+                return false;
+            }
+
+            return SymbolEqualityComparer.Default.Equals(namedType.TypeArguments[0], commandType);
         }
     }
 }

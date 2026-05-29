@@ -80,7 +80,7 @@ if (!OrderNumberRequirements.HasOrderPrefix(instance.OrderNumber))
 
 ## Requirement Rule Requirements
 
-- The member selector must be a simple member access, such as `x => x.OrderNumber`.
+- The member selector must be a simple member path, such as `x => x.OrderNumber` or `x => x.Profile.Email`.
 - The requirement must be a static method group.
 - The requirement must return `bool`.
 - The requirement must have exactly one parameter.

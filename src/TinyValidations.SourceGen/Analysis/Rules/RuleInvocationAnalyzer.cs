@@ -1,6 +1,5 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using TinyValidations.SourceGen.Analysis.Members;
 using TinyValidations.SourceGen.Model;
 using TinyValidations.SourceGen.Validation;
 
