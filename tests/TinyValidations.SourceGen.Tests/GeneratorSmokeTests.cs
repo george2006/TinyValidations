@@ -69,6 +69,35 @@ public sealed class CreateUser
     }
 
     [Fact]
+    public void Generates_rules_from_explicit_define_implementation()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateUserValidation : IValidation<CreateUser>
+{
+    void IValidation<CreateUser>.Define(ValidationRules<CreateUser> rules)
+    {
+        rules.Required(x => x.Email);
+    }
+}
+
+public sealed class CreateUser
+{
+    public string? Email { get; init; }
+}
+""";
+
+        var result = RunGenerator(source);
+        var generated = Assert.Single(result.GeneratedTrees);
+        var text = generated.GetText().ToString();
+
+        Assert.Empty(result.Diagnostics);
+        Assert.Contains("ITinyValidationRunner<global::CreateUser>", text);
+        Assert.Contains("Email is required.", text);
+    }
+
+    [Fact]
     public void Reports_diagnostic_when_validation_has_no_supported_rules()
     {
         var source = """
