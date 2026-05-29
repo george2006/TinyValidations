@@ -1,6 +1,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using TinyValidations.SourceGen;
+using Xunit;
 
 namespace TinyValidations.SourceGen.Tests;
 
@@ -23,5 +24,11 @@ internal static class SourceGeneratorTestHost
         driver = driver.RunGenerators(compilation);
 
         return driver.GetRunResult();
+    }
+
+    public static Diagnostic GetSingleDiagnostic(string source)
+    {
+        var result = Run(source);
+        return Assert.Single(result.Diagnostics);
     }
 }
