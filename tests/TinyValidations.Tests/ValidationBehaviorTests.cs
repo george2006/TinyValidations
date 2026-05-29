@@ -48,6 +48,29 @@ public sealed class ValidationBehaviorTests
     }
 
     [Fact]
+    public async Task Remaining_built_in_rules_return_validation_errors()
+    {
+        var validator = BuildValidator();
+        var command = new ConfigureProduct(
+            string.Empty,
+            null,
+            "TOO-LONG",
+            0,
+            11,
+            6);
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.False(result.IsValid);
+        AssertHasError(result, nameof(ConfigureProduct.Name), "Name must contain text.");
+        AssertHasError(result, nameof(ConfigureProduct.Category), "Category must not be null.");
+        AssertHasError(result, nameof(ConfigureProduct.Code), "Code must contain at most 3 characters.");
+        AssertHasError(result, nameof(ConfigureProduct.MinimumQuantity), "MinimumQuantity must be above 0.");
+        AssertHasError(result, nameof(ConfigureProduct.DiscountPercent), "DiscountPercent must be below 10.");
+        AssertHasError(result, nameof(ConfigureProduct.Rating), "Rating must be at most 5.");
+    }
+
+    [Fact]
     public async Task Custom_rules_are_resolved_from_dependency_injection()
     {
         var validator = BuildValidator(services => services.AddScoped<ReservedTeamNameStore>());
@@ -226,6 +249,27 @@ public sealed class CreateProfileWithCustomMessagesValidation : IValidation<Crea
         rules.AtLeast(x => x.Age, 18, "Adults only.");
         rules.Matches(x => x.Code, "^[A-Z]{3}$", "Code must be three uppercase letters.");
         rules.HasItems(x => x.Roles, "Choose at least one role.");
+    }
+}
+
+public sealed record ConfigureProduct(
+    string Name,
+    string? Category,
+    string Code,
+    int MinimumQuantity,
+    int DiscountPercent,
+    int Rating);
+
+public sealed class ConfigureProductValidation : IValidation<ConfigureProduct>
+{
+    public void Define(ValidationRules<ConfigureProduct> rules)
+    {
+        rules.HasText(x => x.Name);
+        rules.NotNull(x => x.Category);
+        rules.TextLengthAtMost(x => x.Code, 3);
+        rules.Above(x => x.MinimumQuantity, 0);
+        rules.Below(x => x.DiscountPercent, 10);
+        rules.AtMost(x => x.Rating, 5);
     }
 }
 
