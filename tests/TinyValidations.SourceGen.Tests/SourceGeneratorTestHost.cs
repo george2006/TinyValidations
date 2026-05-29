@@ -7,7 +7,7 @@ namespace TinyValidations.SourceGen.Tests;
 
 internal static class SourceGeneratorTestHost
 {
-    public static GeneratorDriverRunResult Run(string source)
+    public static SourceGeneratorRun Run(string source)
     {
         var compilation = CSharpCompilation.Create(
             "Tests",
@@ -23,12 +23,37 @@ internal static class SourceGeneratorTestHost
         GeneratorDriver driver = CSharpGeneratorDriver.Create(new ValidationSourceGenerator());
         driver = driver.RunGenerators(compilation);
 
-        return driver.GetRunResult();
+        return new SourceGeneratorRun(driver.GetRunResult());
+    }
+}
+
+internal sealed class SourceGeneratorRun
+{
+    private readonly GeneratorDriverRunResult _result;
+
+    public SourceGeneratorRun(GeneratorDriverRunResult result)
+    {
+        _result = result;
     }
 
-    public static Diagnostic GetSingleDiagnostic(string source)
+    public Diagnostic SingleDiagnostic()
     {
-        var result = Run(source);
-        return Assert.Single(result.Diagnostics);
+        return Assert.Single(_result.Diagnostics);
+    }
+
+    public string SingleGeneratedSource()
+    {
+        var generated = Assert.Single(_result.GeneratedTrees);
+        return generated.GetText().ToString();
+    }
+
+    public void ShouldHaveNoDiagnostics()
+    {
+        Assert.Empty(_result.Diagnostics);
+    }
+
+    public void ShouldGenerateNoSource()
+    {
+        Assert.Empty(_result.GeneratedTrees);
     }
 }

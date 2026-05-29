@@ -34,8 +34,7 @@ public sealed class CreateUser
 """;
 
         var result = SourceGeneratorTestHost.Run(source);
-        var generated = Assert.Single(result.GeneratedTrees);
-        var text = generated.GetText().ToString();
+        var text = result.SingleGeneratedSource();
 
         Assert.Contains("ITinyValidationRunner<global::CreateUser>", text);
         Assert.Contains("TinyGeneratedValidationContribution", text);
@@ -73,10 +72,9 @@ public sealed class CreateUser
 """;
 
         var result = SourceGeneratorTestHost.Run(source);
-        var generated = Assert.Single(result.GeneratedTrees);
-        var text = generated.GetText().ToString();
+        var text = result.SingleGeneratedSource();
 
-        Assert.Empty(result.Diagnostics);
+        result.ShouldHaveNoDiagnostics();
         Assert.Contains("ITinyValidationRunner<global::CreateUser>", text);
         Assert.Contains("Email is required.", text);
     }
@@ -110,10 +108,9 @@ public sealed class CreateOrder
 """;
 
         var result = SourceGeneratorTestHost.Run(source);
-        var generated = Assert.Single(result.GeneratedTrees);
-        var text = generated.GetText().ToString();
+        var text = result.SingleGeneratedSource();
 
-        Assert.Empty(result.Diagnostics);
+        result.ShouldHaveNoDiagnostics();
         Assert.Contains("if (!global::OrderNumberRequirements.HasOrderPrefix(instance.OrderNumber))", text);
         Assert.Contains("errors.Add(\"OrderNumber\", \"Order number must start with ORD-.\");", text);
     }

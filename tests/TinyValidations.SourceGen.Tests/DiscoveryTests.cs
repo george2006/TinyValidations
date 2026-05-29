@@ -25,8 +25,8 @@ public sealed class CreateUser
 
         var result = SourceGeneratorTestHost.Run(source);
 
-        Assert.Empty(result.Diagnostics);
-        Assert.Empty(result.GeneratedTrees);
+        result.ShouldHaveNoDiagnostics();
+        result.ShouldGenerateNoSource();
     }
 
     [Fact]
@@ -58,8 +58,7 @@ public sealed class CreateUser
 """;
 
         var result = SourceGeneratorTestHost.Run(source);
-        var generated = Assert.Single(result.GeneratedTrees);
-        var text = generated.GetText().ToString();
+        var text = result.SingleGeneratedSource();
 
         Assert.DoesNotContain("Email is required.", text);
     }
