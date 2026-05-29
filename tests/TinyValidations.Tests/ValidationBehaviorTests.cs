@@ -73,6 +73,30 @@ public sealed class ValidationBehaviorTests
     }
 
     [Fact]
+    public async Task Nested_member_rules_return_dotted_member_paths()
+    {
+        var validator = BuildValidator();
+        var command = new UpdateAccount(new AccountProfile(string.Empty));
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.False(result.IsValid);
+        AssertHasError(result, "Profile.Email", "Profile email is required.");
+    }
+
+    [Fact]
+    public async Task Nested_member_rules_handle_null_intermediate_members()
+    {
+        var validator = BuildValidator();
+        var command = new UpdateAccount(null!);
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.False(result.IsValid);
+        AssertHasError(result, "Profile.Email", "Profile email is required.");
+    }
+
+    [Fact]
     public async Task Requires_rules_call_static_requirement_methods()
     {
         var validator = BuildValidator();
@@ -281,6 +305,18 @@ public sealed class ShipPackageTrackingValidation : IValidation<ShipPackage>
     public void Define(ValidationRules<ShipPackage> rules)
     {
         rules.Matches(x => x.TrackingCode, "^[A-Z]{2}[0-9]{4}$");
+    }
+}
+
+public sealed record UpdateAccount(AccountProfile Profile);
+
+public sealed record AccountProfile(string Email);
+
+public sealed class UpdateAccountValidation : IValidation<UpdateAccount>
+{
+    public void Define(ValidationRules<UpdateAccount> rules)
+    {
+        rules.Required(x => x.Profile.Email, "Profile email is required.");
     }
 }
 

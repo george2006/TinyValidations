@@ -25,7 +25,7 @@ namespace TinyValidations.SourceGen.Analysis.Rules
             }
 
             var path = string.Join(".", members);
-            return new AnalyzedMemberAccess(path, "instance." + path);
+            return new AnalyzedMemberAccess(path, CreateAccess(members));
         }
 
         private static string GetParameterName(LambdaExpressionSyntax lambda)
@@ -85,6 +85,16 @@ namespace TinyValidations.SourceGen.Analysis.Rules
             }
 
             return identifier.Identifier.ValueText == parameterName;
+        }
+
+        private static string CreateAccess(List<string> members)
+        {
+            if (members.Count == 1)
+            {
+                return "instance." + members[0];
+            }
+
+            return "instance." + string.Join("?.", members);
         }
     }
 }
