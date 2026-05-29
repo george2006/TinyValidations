@@ -157,6 +157,12 @@ public sealed class CreateUser
         var diagnostic = Assert.Single(result.Diagnostics);
 
         Assert.Equal("TV0001", diagnostic.Id);
+        Assert.Equal(
+            "Validation declaration 'CreateUserValidation' must contain a Define method with one rules parameter",
+            diagnostic.GetMessage());
+        Assert.Equal(
+            source.IndexOf("CreateUserValidation", StringComparison.Ordinal),
+            diagnostic.Location.SourceSpan.Start);
     }
 
     [Fact]
