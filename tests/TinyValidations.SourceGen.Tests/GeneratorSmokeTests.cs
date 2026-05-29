@@ -294,6 +294,33 @@ public sealed class CreateUser
     }
 
     [Fact]
+    public void Reports_diagnostic_when_message_is_not_literal()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateUserValidation : IValidation<CreateUser>
+{
+    public void Define(ValidationRules<CreateUser> rules)
+    {
+        var message = "Email is required.";
+        rules.Required(x => x.Email, message);
+    }
+}
+
+public sealed class CreateUser
+{
+    public string? Email { get; init; }
+}
+""";
+
+        var result = RunGenerator(source);
+        var diagnostic = Assert.Single(result.Diagnostics);
+
+        Assert.Equal("TV0004", diagnostic.Id);
+    }
+
+    [Fact]
     public void Generates_static_requires_rule_call()
     {
         var source = """
