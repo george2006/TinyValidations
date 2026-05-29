@@ -393,6 +393,40 @@ public sealed class CreateOrder
     }
 
     [Fact]
+    public void Reports_diagnostic_when_requires_method_does_not_return_bool()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateOrderValidation : IValidation<CreateOrder>
+{
+    public void Define(ValidationRules<CreateOrder> rules)
+    {
+        rules.Requires(x => x.OrderNumber, OrderNumberRequirements.HasOrderPrefix, "Order number must start with ORD-.");
+    }
+}
+
+public static class OrderNumberRequirements
+{
+    public static string HasOrderPrefix(string? value)
+    {
+        return "";
+    }
+}
+
+public sealed class CreateOrder
+{
+    public string? OrderNumber { get; init; }
+}
+""";
+
+        var result = RunGenerator(source);
+        var diagnostic = Assert.Single(result.Diagnostics);
+
+        Assert.Equal("TV0004", diagnostic.Id);
+    }
+
+    [Fact]
     public void Reports_diagnostic_when_custom_rule_type_is_invalid()
     {
         var source = """
