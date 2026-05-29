@@ -74,12 +74,28 @@ namespace TinyValidations.SourceGen.Analysis.Declarations
                 return false;
             }
 
+            if (!ReturnsVoid(semanticModel, method))
+            {
+                return false;
+            }
+
             return HasValidationRulesParameter(semanticModel, method, commandType, validationRules);
         }
 
         private static bool HasSingleParameter(MethodDeclarationSyntax method)
         {
             return method.ParameterList.Parameters.Count == 1;
+        }
+
+        private static bool ReturnsVoid(SemanticModel semanticModel, MethodDeclarationSyntax method)
+        {
+            var symbol = semanticModel.GetDeclaredSymbol(method);
+            if (!(symbol is IMethodSymbol methodSymbol))
+            {
+                return false;
+            }
+
+            return methodSymbol.ReturnsVoid;
         }
 
         private static bool HasValidationRulesParameter(
