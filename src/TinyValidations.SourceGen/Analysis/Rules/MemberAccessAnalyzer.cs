@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace TinyValidations.SourceGen.Analysis.Members
+namespace TinyValidations.SourceGen.Analysis.Rules
 {
     internal sealed class MemberAccessAnalyzer
     {

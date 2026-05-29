@@ -1,4 +1,4 @@
-namespace TinyValidations.SourceGen.Analysis.Members
+namespace TinyValidations.SourceGen.Analysis.Rules
 {
     internal sealed class AnalyzedMemberAccess
     {
