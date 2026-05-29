@@ -131,6 +131,30 @@ public sealed class CreateUser
     }
 
     [Fact]
+    public void Reports_diagnostic_when_define_parameter_type_is_wrong()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateUserValidation : IValidation<CreateUser>
+{
+    public void Define(string rules)
+    {
+    }
+}
+
+public sealed class CreateUser
+{
+}
+""";
+
+        var result = RunGenerator(source);
+        var diagnostic = Assert.Single(result.Diagnostics);
+
+        Assert.Equal("TV0001", diagnostic.Id);
+    }
+
+    [Fact]
     public void Reports_diagnostic_when_rule_call_is_unsupported()
     {
         var source = """
