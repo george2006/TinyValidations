@@ -229,6 +229,17 @@ public sealed class ValidationBehaviorTests
         Assert.NotEqual(firstMessage, secondMessage);
     }
 
+    [Fact]
+    public async Task Custom_rules_receive_cancellation_token()
+    {
+        var validator = BuildValidator();
+        var source = new CancellationTokenSource();
+
+        await validator.ValidateAsync(new CancellationAwareCommand(), source.Token);
+
+        Assert.Equal(source.Token, CancellationAwareRule.LastToken);
+    }
+
     private static ITinyValidator BuildValidator(Action<IServiceCollection>? configureServices = null)
     {
         var services = new ServiceCollection();
@@ -491,4 +502,28 @@ public sealed class ScopedDependencyRule : IAsyncValidationRule<ScopedRuleComman
 public sealed class ScopedRuleState
 {
     public Guid Id { get; } = Guid.NewGuid();
+}
+
+public sealed record CancellationAwareCommand;
+
+public sealed class CancellationAwareCommandValidation : IValidation<CancellationAwareCommand>
+{
+    public void Define(ValidationRules<CancellationAwareCommand> rules)
+    {
+        rules.Use<CancellationAwareRule>();
+    }
+}
+
+public sealed class CancellationAwareRule : IAsyncValidationRule<CancellationAwareCommand>
+{
+    public static CancellationToken LastToken { get; private set; }
+
+    public ValueTask ValidateAsync(
+        CancellationAwareCommand instance,
+        ValidationErrorCollection errors,
+        CancellationToken cancellationToken)
+    {
+        LastToken = cancellationToken;
+        return ValueTask.CompletedTask;
+    }
 }
