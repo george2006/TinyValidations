@@ -27,6 +27,23 @@ public sealed class ValidationBehaviorTests
     }
 
     [Fact]
+    public async Task Built_in_rules_return_valid_result_when_values_satisfy_rules()
+    {
+        var validator = BuildValidator();
+        var command = new CreateProfile(
+            "person@example.com",
+            "Valid Name",
+            18,
+            "ABC",
+            new[] { "admin" });
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.True(result.IsValid);
+        Assert.Empty(result.Errors);
+    }
+
+    [Fact]
     public async Task Built_in_rules_use_custom_messages()
     {
         var validator = BuildValidator();
@@ -68,6 +85,24 @@ public sealed class ValidationBehaviorTests
         AssertHasError(result, nameof(ConfigureProduct.MinimumQuantity), "MinimumQuantity must be above 0.");
         AssertHasError(result, nameof(ConfigureProduct.DiscountPercent), "DiscountPercent must be below 10.");
         AssertHasError(result, nameof(ConfigureProduct.Rating), "Rating must be at most 5.");
+    }
+
+    [Fact]
+    public async Task Remaining_built_in_rules_accept_boundary_values()
+    {
+        var validator = BuildValidator();
+        var command = new ConfigureProduct(
+            "Product",
+            "Category",
+            "ABC",
+            1,
+            9,
+            5);
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.True(result.IsValid);
+        Assert.Empty(result.Errors);
     }
 
     [Fact]
