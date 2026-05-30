@@ -10,6 +10,7 @@ namespace TinyValidations.SourceGen.Analysis.Rules
         private readonly RuleMethodMap _methodMap = new RuleMethodMap();
         private readonly MemberAccessAnalyzer _memberAccessAnalyzer = new MemberAccessAnalyzer();
         private readonly RuleArgumentAnalyzer _argumentAnalyzer = new RuleArgumentAnalyzer();
+        private readonly CustomRuleAnalyzer _customRuleAnalyzer = new CustomRuleAnalyzer();
 
         public RuleAnalysisResult? Analyze(
             SemanticModel semanticModel,
@@ -39,7 +40,7 @@ namespace TinyValidations.SourceGen.Analysis.Rules
 
             if (kind.Value == RuleKind.Use)
             {
-                return AnalyzeCustomRule(semanticModel, invocation, memberAccess.Name, commandType);
+                return _customRuleAnalyzer.Analyze(semanticModel, memberAccess.Name, commandType);
             }
 
             if (kind.Value == RuleKind.Requires)
@@ -125,58 +126,6 @@ namespace TinyValidations.SourceGen.Analysis.Rules
                 message,
                 string.Empty,
                 requirementMethod));
-        }
-
-        private static RuleAnalysisResult AnalyzeCustomRule(
-            SemanticModel semanticModel,
-            InvocationExpressionSyntax invocation,
-            SimpleNameSyntax methodName,
-            INamedTypeSymbol commandType)
-        {
-            if (!(methodName is GenericNameSyntax genericName))
-            {
-                return RuleAnalysisResult.ForIssue(new ValidationIssue(
-                    ValidationDiagnostics.InvalidCustomRule,
-                    methodName.GetLocation(),
-                    methodName.ToString()));
-            }
-
-            if (!HasSingleTypeArgument(genericName))
-            {
-                return RuleAnalysisResult.ForIssue(new ValidationIssue(
-                    ValidationDiagnostics.InvalidCustomRule,
-                    genericName.GetLocation(),
-                    genericName.ToString()));
-            }
-
-            var typeSyntax = genericName.TypeArgumentList.Arguments[0];
-            var typeSymbol = semanticModel.GetTypeInfo(typeSyntax).Type;
-            if (!IsValidCustomRule(typeSymbol, commandType))
-            {
-                return RuleAnalysisResult.ForIssue(new ValidationIssue(
-                    ValidationDiagnostics.InvalidCustomRule,
-                    typeSyntax.GetLocation(),
-                    typeSyntax.ToString()));
-            }
-
-            var customRuleType = GetTypeName(typeSyntax, typeSymbol);
-
-            return RuleAnalysisResult.ForRule(new RuleDefinition(RuleKind.Use, string.Empty, string.Empty, string.Empty, string.Empty, customRuleType));
-        }
-
-        private static bool HasSingleTypeArgument(GenericNameSyntax genericName)
-        {
-            return genericName.TypeArgumentList.Arguments.Count == 1;
-        }
-
-        private static string GetTypeName(TypeSyntax typeSyntax, ITypeSymbol? typeSymbol)
-        {
-            if (typeSymbol == null)
-            {
-                return typeSyntax.ToString();
-            }
-
-            return typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         }
 
         private static bool IsValidationRulesInvocation(
@@ -292,42 +241,5 @@ namespace TinyValidations.SourceGen.Analysis.Rules
             return containingType + "." + method.Name;
         }
 
-        private static bool IsValidCustomRule(ITypeSymbol? typeSymbol, INamedTypeSymbol commandType)
-        {
-            if (!(typeSymbol is INamedTypeSymbol namedType))
-            {
-                return false;
-            }
-
-            foreach (var candidate in namedType.AllInterfaces)
-            {
-                if (IsAsyncValidationRule(candidate, commandType))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool IsAsyncValidationRule(INamedTypeSymbol candidate, INamedTypeSymbol commandType)
-        {
-            if (candidate.ContainingNamespace.ToDisplayString() != "TinyValidations")
-            {
-                return false;
-            }
-
-            if (candidate.Name != "IAsyncValidationRule")
-            {
-                return false;
-            }
-
-            if (candidate.TypeArguments.Length != 1)
-            {
-                return false;
-            }
-
-            return SymbolEqualityComparer.Default.Equals(candidate.TypeArguments[0], commandType);
-        }
     }
 }
