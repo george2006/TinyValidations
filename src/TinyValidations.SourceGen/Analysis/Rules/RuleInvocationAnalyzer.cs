@@ -35,17 +35,32 @@ namespace TinyValidations.SourceGen.Analysis.Rules
                 return RuleAnalysisIssue.UnsupportedRuleCall(memberAccess.Name, methodName);
             }
 
-            if (kind.Value == RuleKind.Use)
+            return AnalyzeKnownRule(
+                semanticModel,
+                invocation,
+                memberAccess,
+                commandType,
+                kind.Value);
+        }
+
+        private RuleAnalysisResult AnalyzeKnownRule(
+            SemanticModel semanticModel,
+            InvocationExpressionSyntax invocation,
+            MemberAccessExpressionSyntax memberAccess,
+            INamedTypeSymbol commandType,
+            RuleKind ruleKind)
+        {
+            if (ruleKind == RuleKind.Use)
             {
                 return _customRuleAnalyzer.Analyze(semanticModel, memberAccess.Name, commandType);
             }
 
-            if (kind.Value == RuleKind.Requires)
+            if (ruleKind == RuleKind.Requires)
             {
                 return _requiresRuleAnalyzer.Analyze(semanticModel, invocation);
             }
 
-            return _memberRuleAnalyzer.Analyze(kind.Value, invocation);
+            return _memberRuleAnalyzer.Analyze(ruleKind, invocation);
         }
     }
 }
