@@ -1,7 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using TinyValidations.SourceGen.Model;
-using TinyValidations.SourceGen.Validation;
 
 namespace TinyValidations.SourceGen.Analysis.Rules
 {
@@ -14,19 +13,19 @@ namespace TinyValidations.SourceGen.Analysis.Rules
         {
             if (!(methodName is GenericNameSyntax genericName))
             {
-                return InvalidCustomRule(methodName, methodName.ToString());
+                return RuleAnalysisIssue.InvalidCustomRule(methodName, methodName.ToString());
             }
 
             if (!HasSingleTypeArgument(genericName))
             {
-                return InvalidCustomRule(genericName, genericName.ToString());
+                return RuleAnalysisIssue.InvalidCustomRule(genericName, genericName.ToString());
             }
 
             var typeSyntax = genericName.TypeArgumentList.Arguments[0];
             var typeSymbol = semanticModel.GetTypeInfo(typeSyntax).Type;
             if (!IsValidCustomRule(typeSymbol, commandType))
             {
-                return InvalidCustomRule(typeSyntax, typeSyntax.ToString());
+                return RuleAnalysisIssue.InvalidCustomRule(typeSyntax, typeSyntax.ToString());
             }
 
             var customRuleType = GetTypeName(typeSyntax, typeSymbol);
@@ -38,14 +37,6 @@ namespace TinyValidations.SourceGen.Analysis.Rules
                 string.Empty,
                 string.Empty,
                 customRuleType));
-        }
-
-        private static RuleAnalysisResult InvalidCustomRule(SyntaxNode syntax, string value)
-        {
-            return RuleAnalysisResult.ForIssue(new ValidationIssue(
-                ValidationDiagnostics.InvalidCustomRule,
-                syntax.GetLocation(),
-                value));
         }
 
         private static bool HasSingleTypeArgument(GenericNameSyntax genericName)

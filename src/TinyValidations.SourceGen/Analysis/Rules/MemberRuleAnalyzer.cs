@@ -1,6 +1,5 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using TinyValidations.SourceGen.Model;
-using TinyValidations.SourceGen.Validation;
 
 namespace TinyValidations.SourceGen.Analysis.Rules
 {
@@ -13,27 +12,20 @@ namespace TinyValidations.SourceGen.Analysis.Rules
         {
             if (invocation.ArgumentList.Arguments.Count == 0)
             {
-                return RuleAnalysisResult.ForIssue(new ValidationIssue(
-                    ValidationDiagnostics.UnsupportedSelector,
-                    invocation.GetLocation(),
-                    invocation.ToString()));
+                return RuleAnalysisIssue.UnsupportedSelector(invocation, invocation.ToString());
             }
 
             var member = _memberAccessAnalyzer.Analyze(invocation.ArgumentList.Arguments[0].Expression);
             if (member == null)
             {
-                return RuleAnalysisResult.ForIssue(new ValidationIssue(
-                    ValidationDiagnostics.UnsupportedSelector,
-                    invocation.ArgumentList.Arguments[0].GetLocation(),
-                    invocation.ArgumentList.Arguments[0].Expression.ToString()));
+                return RuleAnalysisIssue.UnsupportedSelector(
+                    invocation.ArgumentList.Arguments[0],
+                    invocation.ArgumentList.Arguments[0].Expression.ToString());
             }
 
             if (HasUnsupportedArgument(kind, invocation))
             {
-                return RuleAnalysisResult.ForIssue(new ValidationIssue(
-                    ValidationDiagnostics.UnsupportedArgument,
-                    invocation.GetLocation(),
-                    invocation.ToString()));
+                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
             }
 
             var argument = _argumentAnalyzer.GetRuleArgument(kind, invocation);

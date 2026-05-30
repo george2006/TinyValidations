@@ -1,7 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using TinyValidations.SourceGen.Model;
-using TinyValidations.SourceGen.Validation;
 
 namespace TinyValidations.SourceGen.Analysis.Rules
 {
@@ -15,27 +14,27 @@ namespace TinyValidations.SourceGen.Analysis.Rules
         {
             if (invocation.ArgumentList.Arguments.Count < 3)
             {
-                return UnsupportedArgument(invocation, invocation.ToString());
+                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
             }
 
             var member = _memberAccessAnalyzer.Analyze(invocation.ArgumentList.Arguments[0].Expression);
             if (member == null)
             {
-                return UnsupportedSelector(
+                return RuleAnalysisIssue.UnsupportedSelector(
                     invocation.ArgumentList.Arguments[0],
                     invocation.ArgumentList.Arguments[0].Expression.ToString());
             }
 
             if (!IsSupportedRequirementMethod(semanticModel, invocation.ArgumentList.Arguments[1].Expression, out var requirementMethod))
             {
-                return UnsupportedArgument(
+                return RuleAnalysisIssue.UnsupportedArgument(
                     invocation.ArgumentList.Arguments[1],
                     invocation.ArgumentList.Arguments[1].Expression.ToString());
             }
 
             if (!IsSupportedArgument(invocation, 2))
             {
-                return UnsupportedArgument(
+                return RuleAnalysisIssue.UnsupportedArgument(
                     invocation.ArgumentList.Arguments[2],
                     invocation.ArgumentList.Arguments[2].Expression.ToString());
             }
@@ -50,22 +49,6 @@ namespace TinyValidations.SourceGen.Analysis.Rules
                 message,
                 string.Empty,
                 requirementMethod));
-        }
-
-        private static RuleAnalysisResult UnsupportedSelector(SyntaxNode syntax, string value)
-        {
-            return RuleAnalysisResult.ForIssue(new ValidationIssue(
-                ValidationDiagnostics.UnsupportedSelector,
-                syntax.GetLocation(),
-                value));
-        }
-
-        private static RuleAnalysisResult UnsupportedArgument(SyntaxNode syntax, string value)
-        {
-            return RuleAnalysisResult.ForIssue(new ValidationIssue(
-                ValidationDiagnostics.UnsupportedArgument,
-                syntax.GetLocation(),
-                value));
         }
 
         private static bool IsSupportedArgument(InvocationExpressionSyntax invocation, int argumentIndex)

@@ -1,7 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using TinyValidations.SourceGen.Model;
-using TinyValidations.SourceGen.Validation;
 
 namespace TinyValidations.SourceGen.Analysis.Rules
 {
@@ -32,10 +31,7 @@ namespace TinyValidations.SourceGen.Analysis.Rules
             var kind = _methodMap.GetKind(methodName);
             if (kind == null)
             {
-                return RuleAnalysisResult.ForIssue(new ValidationIssue(
-                    ValidationDiagnostics.UnsupportedRuleCall,
-                    memberAccess.Name.GetLocation(),
-                    methodName));
+                return RuleAnalysisIssue.UnsupportedRuleCall(memberAccess.Name, methodName);
             }
 
             if (kind.Value == RuleKind.Use)
