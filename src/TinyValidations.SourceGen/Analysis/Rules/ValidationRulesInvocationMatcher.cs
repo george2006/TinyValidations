@@ -11,12 +11,33 @@ namespace TinyValidations.SourceGen.Analysis.Rules
             InvocationExpressionSyntax invocation,
             INamedTypeSymbol validationRules)
         {
-            var symbol = semanticModel.GetSymbolInfo(invocation).Symbol;
-            if (symbol is IMethodSymbol method)
+            if (MatchesResolvedMethod(semanticModel, invocation, validationRules))
             {
-                return SymbolEqualityComparer.Default.Equals(method.ContainingType.OriginalDefinition, validationRules);
+                return true;
             }
 
+            return MatchesMemberAccessExpression(semanticModel, memberAccess, validationRules);
+        }
+
+        private static bool MatchesResolvedMethod(
+            SemanticModel semanticModel,
+            InvocationExpressionSyntax invocation,
+            INamedTypeSymbol validationRules)
+        {
+            var symbol = semanticModel.GetSymbolInfo(invocation).Symbol;
+            if (!(symbol is IMethodSymbol method))
+            {
+                return false;
+            }
+
+            return SymbolEqualityComparer.Default.Equals(method.ContainingType.OriginalDefinition, validationRules);
+        }
+
+        private static bool MatchesMemberAccessExpression(
+            SemanticModel semanticModel,
+            MemberAccessExpressionSyntax memberAccess,
+            INamedTypeSymbol validationRules)
+        {
             var expressionType = semanticModel.GetTypeInfo(memberAccess.Expression).Type;
             if (!(expressionType is INamedTypeSymbol namedType))
             {
