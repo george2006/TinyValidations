@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using TinyValidations.SourceGen.Model;
 
-namespace TinyValidations.SourceGen.Analysis.Rules
+namespace TinyValidations.SourceGen.Analysis.RuleInvocations
 {
     internal sealed class RuleMethodMap
     {

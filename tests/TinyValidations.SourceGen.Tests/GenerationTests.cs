@@ -80,6 +80,36 @@ public sealed class CreateUser
     }
 
     [Fact]
+    public void Generates_all_rules_from_explicit_define_implementation()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateUserValidation : IValidation<CreateUser>
+{
+    void IValidation<CreateUser>.Define(ValidationRules<CreateUser> rules)
+    {
+        rules.Required(x => x.Email);
+        rules.TextLengthAtLeast(x => x.DisplayName, 2);
+    }
+}
+
+public sealed class CreateUser
+{
+    public string? Email { get; init; }
+    public string? DisplayName { get; init; }
+}
+""";
+
+        var result = SourceGeneratorTestHost.Run(source);
+        var text = result.SingleGeneratedSource();
+
+        result.ShouldHaveNoDiagnostics();
+        Assert.Contains("Email is required.", text);
+        Assert.Contains("DisplayName must contain at least 2 characters.", text);
+    }
+
+    [Fact]
     public void Generates_static_requires_rule_call()
     {
         var source = """

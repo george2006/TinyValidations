@@ -1,0 +1,66 @@
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using TinyValidations.SourceGen.Model;
+
+namespace TinyValidations.SourceGen.Analysis.RuleInvocations
+{
+    internal sealed class RuleInvocationAnalyzer
+    {
+        private readonly ValidationRulesInvocationMatcher _invocationMatcher = new ValidationRulesInvocationMatcher();
+        private readonly RuleMethodMap _methodMap = new RuleMethodMap();
+        private readonly MemberRuleAnalyzer _memberRuleAnalyzer = new MemberRuleAnalyzer();
+        private readonly CustomRuleAnalyzer _customRuleAnalyzer = new CustomRuleAnalyzer();
+        private readonly RequiresRuleAnalyzer _requiresRuleAnalyzer = new RequiresRuleAnalyzer();
+
+        public RuleAnalysisResult? Analyze(
+            SemanticModel semanticModel,
+            InvocationExpressionSyntax invocation,
+            INamedTypeSymbol validationRules,
+            INamedTypeSymbol commandType)
+        {
+            if (!(invocation.Expression is MemberAccessExpressionSyntax memberAccess))
+            {
+                return null;
+            }
+
+            if (!_invocationMatcher.IsMatch(semanticModel, memberAccess, invocation, validationRules))
+            {
+                return null;
+            }
+
+            var methodName = memberAccess.Name.Identifier.ValueText;
+            var kind = _methodMap.GetKind(methodName);
+            if (kind == null)
+            {
+                return RuleAnalysisIssue.UnsupportedRuleCall(memberAccess.Name, methodName);
+            }
+
+            return AnalyzeKnownRule(
+                semanticModel,
+                invocation,
+                memberAccess,
+                commandType,
+                kind.Value);
+        }
+
+        private RuleAnalysisResult AnalyzeKnownRule(
+            SemanticModel semanticModel,
+            InvocationExpressionSyntax invocation,
+            MemberAccessExpressionSyntax memberAccess,
+            INamedTypeSymbol commandType,
+            RuleKind ruleKind)
+        {
+            if (ruleKind == RuleKind.Use)
+            {
+                return _customRuleAnalyzer.Analyze(semanticModel, memberAccess.Name, commandType);
+            }
+
+            if (ruleKind == RuleKind.Requires)
+            {
+                return _requiresRuleAnalyzer.Analyze(semanticModel, invocation);
+            }
+
+            return _memberRuleAnalyzer.Analyze(ruleKind, invocation);
+        }
+    }
+}

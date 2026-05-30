@@ -27,6 +27,23 @@ public sealed class ValidationBehaviorTests
     }
 
     [Fact]
+    public async Task Built_in_rules_return_valid_result_when_values_satisfy_rules()
+    {
+        var validator = BuildValidator();
+        var command = new CreateProfile(
+            "person@example.com",
+            "Valid Name",
+            18,
+            "ABC",
+            new[] { "admin" });
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.True(result.IsValid);
+        Assert.Empty(result.Errors);
+    }
+
+    [Fact]
     public async Task Built_in_rules_use_custom_messages()
     {
         var validator = BuildValidator();
@@ -68,6 +85,50 @@ public sealed class ValidationBehaviorTests
         AssertHasError(result, nameof(ConfigureProduct.MinimumQuantity), "MinimumQuantity must be above 0.");
         AssertHasError(result, nameof(ConfigureProduct.DiscountPercent), "DiscountPercent must be below 10.");
         AssertHasError(result, nameof(ConfigureProduct.Rating), "Rating must be at most 5.");
+    }
+
+    [Fact]
+    public async Task Remaining_built_in_rules_accept_boundary_values()
+    {
+        var validator = BuildValidator();
+        var command = new ConfigureProduct(
+            "Product",
+            "Category",
+            "ABC",
+            1,
+            9,
+            5);
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.True(result.IsValid);
+        Assert.Empty(result.Errors);
+    }
+
+    [Fact]
+    public async Task Text_rules_reject_null_empty_and_whitespace_values()
+    {
+        var validator = BuildValidator();
+        var command = new UpdateContact(null, string.Empty, "   ");
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.False(result.IsValid);
+        AssertHasError(result, nameof(UpdateContact.RequiredEmail), "RequiredEmail is required.");
+        AssertHasError(result, nameof(UpdateContact.DisplayName), "DisplayName must contain text.");
+        AssertHasError(result, nameof(UpdateContact.Notes), "Notes must contain text.");
+    }
+
+    [Fact]
+    public async Task Text_rules_accept_non_empty_text_values()
+    {
+        var validator = BuildValidator();
+        var command = new UpdateContact("person@example.com", "Person", "Available");
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.True(result.IsValid);
+        Assert.Empty(result.Errors);
     }
 
     [Fact]
@@ -270,6 +331,22 @@ public sealed class ConfigureProductValidation : IValidation<ConfigureProduct>
         rules.Above(x => x.MinimumQuantity, 0);
         rules.Below(x => x.DiscountPercent, 10);
         rules.AtMost(x => x.Rating, 5);
+    }
+}
+
+public sealed record UpdateContact(
+    string? RequiredEmail,
+    string DisplayName,
+    string Notes);
+
+public sealed class UpdateContactValidation : IValidation<UpdateContact>
+{
+    public void Define(ValidationRules<UpdateContact> rules)
+    {
+        rules.Required(x => x.RequiredEmail);
+        rules.HasText(x => x.DisplayName);
+        rules.HasText(x => x.Notes);
+        rules.Email(x => x.RequiredEmail);
     }
 }
 

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using TinyValidations.SourceGen.Analysis.Rules;
+using TinyValidations.SourceGen.Analysis.RuleInvocations;
 using TinyValidations.SourceGen.Model;
 
 namespace TinyValidations.SourceGen.Analysis.Declarations

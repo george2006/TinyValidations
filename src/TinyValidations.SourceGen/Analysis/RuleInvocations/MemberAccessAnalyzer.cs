@@ -1,11 +1,12 @@
 using System.Collections.Generic;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace TinyValidations.SourceGen.Analysis.Rules
+namespace TinyValidations.SourceGen.Analysis.RuleInvocations
 {
     internal sealed class MemberAccessAnalyzer
     {
-        public AnalyzedMemberAccess? Analyze(Microsoft.CodeAnalysis.CSharp.Syntax.ExpressionSyntax expression)
+        public AnalyzedMemberAccess? Analyze(ExpressionSyntax expression)
         {
             if (!(expression is LambdaExpressionSyntax lambda))
             {
@@ -58,10 +59,10 @@ namespace TinyValidations.SourceGen.Analysis.Rules
             return lambda.ParameterList.Parameters.Count == 1;
         }
 
-        private static List<string> ReadMembers(Microsoft.CodeAnalysis.SyntaxNode body, string parameterName)
+        private static List<string> ReadMembers(SyntaxNode body, string parameterName)
         {
             var members = new List<string>();
-            ExpressionSyntax? current = body as Microsoft.CodeAnalysis.CSharp.Syntax.ExpressionSyntax;
+            ExpressionSyntax? current = body as ExpressionSyntax;
 
             while (current is MemberAccessExpressionSyntax memberAccess)
             {

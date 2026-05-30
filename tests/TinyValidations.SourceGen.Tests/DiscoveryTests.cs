@@ -62,4 +62,38 @@ public sealed class CreateUser
 
         Assert.DoesNotContain("Email is required.", text);
     }
+
+    [Fact]
+    public void Ignores_validation_rule_calls_outside_define_method()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateUserValidation : IValidation<CreateUser>
+{
+    public void Define(ValidationRules<CreateUser> rules)
+    {
+        rules.Required(x => x.Email);
+    }
+
+    public void Configure(ValidationRules<CreateUser> rules)
+    {
+        rules.Required(x => x.DisplayName);
+    }
+}
+
+public sealed class CreateUser
+{
+    public string? Email { get; init; }
+    public string? DisplayName { get; init; }
+}
+""";
+
+        var result = SourceGeneratorTestHost.Run(source);
+        var text = result.SingleGeneratedSource();
+
+        result.ShouldHaveNoDiagnostics();
+        Assert.Contains("Email is required.", text);
+        Assert.DoesNotContain("DisplayName is required.", text);
+    }
 }

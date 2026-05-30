@@ -1,23 +1,23 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using TinyValidations.SourceGen.Model;
 
-namespace TinyValidations.SourceGen.Analysis.Rules
+namespace TinyValidations.SourceGen.Analysis.RuleInvocations
 {
     internal sealed class RuleArgumentAnalyzer
     {
         public string GetRuleArgument(RuleKind kind, InvocationExpressionSyntax invocation)
         {
-            if (!RequiresValueArgument(kind))
+            if (!RuleShape.RequiresValueArgument(kind))
             {
                 return string.Empty;
             }
 
-            return GetArgument(invocation, 1);
+            return GetArgument(invocation, RuleShape.ValueArgumentIndex(kind));
         }
 
         public string GetMessage(RuleKind kind, InvocationExpressionSyntax invocation)
         {
-            var messageIndex = GetMessageArgumentIndex(kind);
+            var messageIndex = RuleShape.MessageArgumentIndex(kind);
             return GetArgument(invocation, messageIndex);
         }
 
@@ -31,30 +31,9 @@ namespace TinyValidations.SourceGen.Analysis.Rules
             return invocation.ArgumentList.Arguments[argumentIndex].Expression.ToString();
         }
 
-        private static int GetMessageArgumentIndex(RuleKind kind)
-        {
-            if (RequiresValueArgument(kind))
-            {
-                return 2;
-            }
-
-            return 1;
-        }
-
         private static bool HasArgument(InvocationExpressionSyntax invocation, int argumentIndex)
         {
             return invocation.ArgumentList.Arguments.Count > argumentIndex;
-        }
-
-        private static bool RequiresValueArgument(RuleKind kind)
-        {
-            return kind == RuleKind.TextLengthAtLeast
-                || kind == RuleKind.TextLengthAtMost
-                || kind == RuleKind.Above
-                || kind == RuleKind.AtLeast
-                || kind == RuleKind.Below
-                || kind == RuleKind.AtMost
-                || kind == RuleKind.Matches;
         }
     }
 }
