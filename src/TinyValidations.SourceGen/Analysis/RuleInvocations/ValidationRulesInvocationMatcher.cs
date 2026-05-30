@@ -1,7 +1,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace TinyValidations.SourceGen.Analysis.Rules
+namespace TinyValidations.SourceGen.Analysis.RuleInvocations
 {
     internal sealed class ValidationRulesInvocationMatcher
     {

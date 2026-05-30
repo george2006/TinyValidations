@@ -2,7 +2,7 @@ using Microsoft.CodeAnalysis;
 using TinyValidations.SourceGen.Model;
 using TinyValidations.SourceGen.Validation;
 
-namespace TinyValidations.SourceGen.Analysis.Rules
+namespace TinyValidations.SourceGen.Analysis.RuleInvocations
 {
     internal static class RuleAnalysisIssue
     {
