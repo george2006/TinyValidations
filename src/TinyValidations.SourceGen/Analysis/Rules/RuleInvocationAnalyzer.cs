@@ -202,7 +202,7 @@ namespace TinyValidations.SourceGen.Analysis.Rules
 
         private static bool HasUnsupportedArgument(RuleKind kind, InvocationExpressionSyntax invocation)
         {
-            var valueArgumentIndex = GetValueArgumentIndex(kind);
+            var valueArgumentIndex = RuleShape.ValueArgumentIndex(kind);
             if (valueArgumentIndex >= 0)
             {
                 if (!IsSupportedArgument(invocation, valueArgumentIndex))
@@ -211,7 +211,7 @@ namespace TinyValidations.SourceGen.Analysis.Rules
                 }
             }
 
-            var messageArgumentIndex = GetMessageArgumentIndex(kind);
+            var messageArgumentIndex = RuleShape.MessageArgumentIndex(kind);
             if (HasArgument(invocation, messageArgumentIndex))
             {
                 if (!IsSupportedArgument(invocation, messageArgumentIndex))
@@ -221,26 +221,6 @@ namespace TinyValidations.SourceGen.Analysis.Rules
             }
 
             return false;
-        }
-
-        private static int GetValueArgumentIndex(RuleKind kind)
-        {
-            if (RequiresValueArgument(kind))
-            {
-                return 1;
-            }
-
-            return -1;
-        }
-
-        private static int GetMessageArgumentIndex(RuleKind kind)
-        {
-            if (RequiresValueArgument(kind))
-            {
-                return 2;
-            }
-
-            return 1;
         }
 
         private static bool HasArgument(InvocationExpressionSyntax invocation, int argumentIndex)
@@ -310,41 +290,6 @@ namespace TinyValidations.SourceGen.Analysis.Rules
         {
             var containingType = method.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             return containingType + "." + method.Name;
-        }
-
-        private static bool RequiresValueArgument(RuleKind kind)
-        {
-            if (kind == RuleKind.TextLengthAtLeast)
-            {
-                return true;
-            }
-
-            if (kind == RuleKind.TextLengthAtMost)
-            {
-                return true;
-            }
-
-            if (kind == RuleKind.Above)
-            {
-                return true;
-            }
-
-            if (kind == RuleKind.AtLeast)
-            {
-                return true;
-            }
-
-            if (kind == RuleKind.Below)
-            {
-                return true;
-            }
-
-            if (kind == RuleKind.AtMost)
-            {
-                return true;
-            }
-
-            return kind == RuleKind.Matches;
         }
 
         private static bool IsValidCustomRule(ITypeSymbol? typeSymbol, INamedTypeSymbol commandType)
