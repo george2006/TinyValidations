@@ -29,7 +29,11 @@ namespace TinyValidations.SourceGen.Analysis.Rules
             }
 
             var customRuleType = GetTypeName(typeSyntax, typeSymbol);
+            return CreateRule(customRuleType);
+        }
 
+        private static RuleAnalysisResult CreateRule(string customRuleType)
+        {
             return RuleAnalysisResult.ForRule(new RuleDefinition(
                 RuleKind.Use,
                 string.Empty,
@@ -74,22 +78,32 @@ namespace TinyValidations.SourceGen.Analysis.Rules
 
         private static bool IsAsyncValidationRule(INamedTypeSymbol candidate, INamedTypeSymbol commandType)
         {
-            if (candidate.ContainingNamespace.ToDisplayString() != "TinyValidations")
+            if (!IsTinyValidationsRule(candidate))
             {
                 return false;
             }
 
-            if (candidate.Name != "IAsyncValidationRule")
-            {
-                return false;
-            }
-
-            if (candidate.TypeArguments.Length != 1)
+            if (!HasSingleTypeArgument(candidate))
             {
                 return false;
             }
 
             return SymbolEqualityComparer.Default.Equals(candidate.TypeArguments[0], commandType);
+        }
+
+        private static bool IsTinyValidationsRule(INamedTypeSymbol candidate)
+        {
+            if (candidate.ContainingNamespace.ToDisplayString() != "TinyValidations")
+            {
+                return false;
+            }
+
+            return candidate.Name == "IAsyncValidationRule";
+        }
+
+        private static bool HasSingleTypeArgument(INamedTypeSymbol candidate)
+        {
+            return candidate.TypeArguments.Length == 1;
         }
     }
 }
