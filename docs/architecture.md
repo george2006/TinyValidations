@@ -9,6 +9,18 @@ The runtime library contains the public API, execution types, generated-code han
 
 The source generator reads validation declarations and emits validation runners.
 
+## Design Principles
+
+TinyValidations is designed to stay small enough to understand.
+
+- The runtime package is host-agnostic.
+- Validation declarations are compile-time input, not runtime rule objects.
+- Generated runners use direct C# checks for built-in rules.
+- Custom async rules are the extension point for business logic and scoped services.
+- Dependency injection registration must be idempotent and predictable.
+- Public contracts should stay small before 1.0.
+- Tests should protect user-visible behavior, not private helper trivia.
+
 ## Runtime Project
 
 ```text
@@ -25,6 +37,8 @@ src/TinyValidations
 ```text
 src/TinyValidations.SourceGen
   Analysis
+    Declarations
+    RuleInvocations
   Model
   Planning
   Emission
@@ -65,6 +79,8 @@ Emission writes generated C# source.
 Generated runners implement `ITinyValidationRunner<T>`.
 
 Generated contributions register runners and custom rules with Microsoft dependency injection.
+
+Generated contributions are added to the runtime bootstrap through module initializers. The bootstrap keeps a process-wide contribution list, but applies contributions only once per `IServiceCollection`.
 
 ## Runtime Execution
 

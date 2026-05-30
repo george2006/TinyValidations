@@ -4,13 +4,13 @@ This guide shows the basic TinyValidations flow.
 
 ## Install
 
-TinyValidations is currently published as a beta package:
+Install TinyValidations:
 
 ```bash
 dotnet add package TinyValidations --version 0.1.0-beta.1
 ```
 
-For local development, reference the project directly.
+The package is preparing for 1.0. For local development, reference the project directly.
 
 ## Register Services
 
@@ -24,6 +24,8 @@ var services = new ServiceCollection();
 
 services.UseTinyValidations();
 ```
+
+Calling `UseTinyValidations` more than once on the same service collection is safe.
 
 Register any services required by custom rules before building the provider:
 
