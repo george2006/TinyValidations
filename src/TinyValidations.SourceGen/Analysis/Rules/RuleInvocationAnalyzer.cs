@@ -8,8 +8,7 @@ namespace TinyValidations.SourceGen.Analysis.Rules
     internal sealed class RuleInvocationAnalyzer
     {
         private readonly RuleMethodMap _methodMap = new RuleMethodMap();
-        private readonly MemberAccessAnalyzer _memberAccessAnalyzer = new MemberAccessAnalyzer();
-        private readonly RuleArgumentAnalyzer _argumentAnalyzer = new RuleArgumentAnalyzer();
+        private readonly MemberRuleAnalyzer _memberRuleAnalyzer = new MemberRuleAnalyzer();
         private readonly CustomRuleAnalyzer _customRuleAnalyzer = new CustomRuleAnalyzer();
         private readonly RequiresRuleAnalyzer _requiresRuleAnalyzer = new RequiresRuleAnalyzer();
 
@@ -49,35 +48,7 @@ namespace TinyValidations.SourceGen.Analysis.Rules
                 return _requiresRuleAnalyzer.Analyze(semanticModel, invocation);
             }
 
-            if (invocation.ArgumentList.Arguments.Count == 0)
-            {
-                return RuleAnalysisResult.ForIssue(new ValidationIssue(
-                    ValidationDiagnostics.UnsupportedSelector,
-                    invocation.GetLocation(),
-                    invocation.ToString()));
-            }
-
-            var member = _memberAccessAnalyzer.Analyze(invocation.ArgumentList.Arguments[0].Expression);
-            if (member == null)
-            {
-                return RuleAnalysisResult.ForIssue(new ValidationIssue(
-                    ValidationDiagnostics.UnsupportedSelector,
-                    invocation.ArgumentList.Arguments[0].GetLocation(),
-                    invocation.ArgumentList.Arguments[0].Expression.ToString()));
-            }
-
-            if (HasUnsupportedArgument(kind.Value, invocation))
-            {
-                return RuleAnalysisResult.ForIssue(new ValidationIssue(
-                    ValidationDiagnostics.UnsupportedArgument,
-                    invocation.GetLocation(),
-                    invocation.ToString()));
-            }
-
-            var argument = _argumentAnalyzer.GetRuleArgument(kind.Value, invocation);
-            var message = _argumentAnalyzer.GetMessage(kind.Value, invocation);
-
-            return RuleAnalysisResult.ForRule(new RuleDefinition(kind.Value, member.Path, member.Access, argument, message, string.Empty));
+            return _memberRuleAnalyzer.Analyze(kind.Value, invocation);
         }
 
         private static bool IsValidationRulesInvocation(
@@ -99,44 +70,6 @@ namespace TinyValidations.SourceGen.Analysis.Rules
             }
 
             return SymbolEqualityComparer.Default.Equals(namedType.OriginalDefinition, validationRules);
-        }
-
-        private static bool HasUnsupportedArgument(RuleKind kind, InvocationExpressionSyntax invocation)
-        {
-            var valueArgumentIndex = RuleShape.ValueArgumentIndex(kind);
-            if (valueArgumentIndex >= 0)
-            {
-                if (!IsSupportedArgument(invocation, valueArgumentIndex))
-                {
-                    return true;
-                }
-            }
-
-            var messageArgumentIndex = RuleShape.MessageArgumentIndex(kind);
-            if (HasArgument(invocation, messageArgumentIndex))
-            {
-                if (!IsSupportedArgument(invocation, messageArgumentIndex))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool HasArgument(InvocationExpressionSyntax invocation, int argumentIndex)
-        {
-            return invocation.ArgumentList.Arguments.Count > argumentIndex;
-        }
-
-        private static bool IsSupportedArgument(InvocationExpressionSyntax invocation, int argumentIndex)
-        {
-            if (!HasArgument(invocation, argumentIndex))
-            {
-                return false;
-            }
-
-            return invocation.ArgumentList.Arguments[argumentIndex].Expression is LiteralExpressionSyntax;
         }
 
     }
