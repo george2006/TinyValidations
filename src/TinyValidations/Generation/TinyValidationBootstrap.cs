@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,17 +13,34 @@ public static class TinyValidationBootstrap
     {
         if (contribution is null)
         {
-            throw new System.ArgumentNullException(nameof(contribution));
+            throw new ArgumentNullException(nameof(contribution));
         }
 
         lock (SyncRoot)
         {
+            if (HasContribution(contribution))
+            {
+                return;
+            }
+
             Contributions.Add(contribution);
         }
     }
 
     public static void Apply(IServiceCollection services)
     {
+        if (services is null)
+        {
+            throw new ArgumentNullException(nameof(services));
+        }
+
+        if (HasAppliedMarker(services))
+        {
+            return;
+        }
+
+        services.AddSingleton<TinyValidationBootstrapAppliedMarker>();
+
         ITinyValidationContribution[] snapshot;
 
         lock (SyncRoot)
@@ -34,5 +52,40 @@ public static class TinyValidationBootstrap
         {
             contribution.Register(services);
         }
+    }
+
+    private static bool HasContribution(ITinyValidationContribution contribution)
+    {
+        foreach (var registered in Contributions)
+        {
+            if (ReferenceEquals(registered, contribution))
+            {
+                return true;
+            }
+
+            if (registered.GetType() == contribution.GetType())
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasAppliedMarker(IServiceCollection services)
+    {
+        foreach (var descriptor in services)
+        {
+            if (descriptor.ServiceType == typeof(TinyValidationBootstrapAppliedMarker))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private sealed class TinyValidationBootstrapAppliedMarker
+    {
     }
 }

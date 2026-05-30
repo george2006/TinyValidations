@@ -70,4 +70,8 @@ errors.Add(nameof(CreateUser.Email), "Email is already registered.");
 
 The first argument is the member name. The second argument is the user-facing message.
 
+Both values are required. TinyValidations rejects null, empty, or whitespace-only members and messages so custom-rule failures stay explicit.
+
+`ValidationErrorCollection` is intentionally part of the public custom-rule contract for 1.0. It is small: custom rules add errors, and TinyValidations turns the collection into an immutable `ValidationResult` snapshot after validation.
+
 For generator-native static checks, see [Extending TinyValidations](extending.md).

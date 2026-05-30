@@ -4,7 +4,7 @@ TinyValidations is a small compile-time validation library for application-layer
 
 It was built for TinyDispatcher-style applications first: define a command, define its validation, register services, and let generated code do the boring work before the handler runs. Native ASP.NET integration is planned, but the core package is intentionally host-agnostic.
 
-> Status: beta. The public shape is small and usable, but host integrations and some advanced syntax support are still evolving.
+> Status: preparing for 1.0. The core package is intentionally small and host-agnostic. Native host integrations may ship separately.
 
 ## Contents
 
@@ -13,6 +13,7 @@ It was built for TinyDispatcher-style applications first: define a command, defi
 - [Validation declarations](#validation-declarations)
 - [Custom rules](#custom-rules)
 - [TinyDispatcher](#tinydispatcher)
+- [Design principles](#design-principles)
 - [Documentation](#documentation)
 - [Current limitations](#current-limitations)
 
@@ -33,7 +34,7 @@ The goal is not to be a huge validation framework. The goal is calm command vali
 
 ## Quick start
 
-Install the beta package:
+Install the current package:
 
 ```bash
 dotnet add package TinyValidations --version 0.1.0-beta.1
@@ -164,6 +165,18 @@ See [`samples/TinyDispatcherAspNetCore`](samples/TinyDispatcherAspNetCore) for a
 
 See [`samples/MediatRAspNetCore`](samples/MediatRAspNetCore) for the same application shape using a MediatR pipeline behavior.
 
+## Design principles
+
+TinyValidations is intentionally boring in the places that matter.
+
+- Keep the public API small before adding convenience.
+- Prefer source-generated C# over runtime reflection or expression interpretation.
+- Keep the core package host-agnostic.
+- Treat custom rules as the extension point for business behavior.
+- Keep built-in rule declaration shapes narrow and explicit.
+- Protect behavior with tests instead of testing private implementation details.
+- Make dependency injection registration predictable and idempotent.
+
 ## Documentation
 
 - [Getting started](docs/getting-started.md)
@@ -177,11 +190,11 @@ See [`samples/MediatRAspNetCore`](samples/MediatRAspNetCore) for the same applic
 
 ## Current limitations
 
-TinyValidations is intentionally small and currently early.
+TinyValidations is intentionally small.
 
 - Source generator diagnostics are intentionally focused.
 - Supported rule declaration shapes are intentionally narrow.
-- Generated registration uses the current bootstrap mechanism and may change.
+- Generated registration uses a bootstrap contribution mechanism that is idempotent per service collection.
 - Native ASP.NET integration is planned but not implemented yet.
 - Tests cover runtime behavior, generated behavior, diagnostics, and multi-assembly contributions.
 

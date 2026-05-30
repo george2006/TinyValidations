@@ -1,17 +1,15 @@
 # Roadmap
 
-TinyValidations is beta software.
+TinyValidations is preparing for 1.0.
 
 This roadmap describes the expected direction, not a compatibility promise.
 
 ## Near Term
 
-- Add a `.gitignore`.
-- Improve source generator diagnostics.
-- Add compile-and-execute generator tests.
-- Expand sample projects.
-- Document all supported syntax shapes.
-- Add NuGet package metadata.
+- Final public API review.
+- Final documentation review.
+- Release package metadata review.
+- Keep adding behavioral tests only where they protect user-visible contracts.
 
 ## TinyDispatcher
 
@@ -34,6 +32,6 @@ This roadmap describes the expected direction, not a compatibility promise.
 
 ## Runtime
 
-- Revisit `ValidationErrorCollection` as a public custom-rule surface.
-- Decide whether bootstrap registration remains the long-term mechanism.
+- Keep `ValidationErrorCollection` as the small public custom-rule error contract for 1.0.
+- Keep bootstrap registration idempotent per service collection.
 - Add more built-in helper rules only when they stay small and boring.

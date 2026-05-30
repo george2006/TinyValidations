@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,7 +10,12 @@ public sealed class ValidationResult
 
     public ValidationResult(IReadOnlyCollection<ValidationError> errors)
     {
-        Errors = errors;
+        if (errors is null)
+        {
+            throw new ArgumentNullException(nameof(errors));
+        }
+
+        Errors = errors.ToArray();
     }
 
     public IReadOnlyCollection<ValidationError> Errors { get; }

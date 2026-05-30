@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace TinyValidations;
@@ -15,6 +16,11 @@ public sealed class ValidationErrorCollection
 
     public void AddRange(IEnumerable<ValidationError> errors)
     {
+        if (errors is null)
+        {
+            throw new ArgumentNullException(nameof(errors));
+        }
+
         _errors.AddRange(errors);
     }
 
