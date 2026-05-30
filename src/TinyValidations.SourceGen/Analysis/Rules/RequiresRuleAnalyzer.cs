@@ -21,7 +21,7 @@ namespace TinyValidations.SourceGen.Analysis.Rules
             var requirementArgument = invocation.ArgumentList.Arguments[1];
             var messageArgument = invocation.ArgumentList.Arguments[2];
 
-            var member = _memberAccessAnalyzer.Analyze(selectorArgument.Expression);
+            var member = AnalyzeSelector(selectorArgument);
             if (member == null)
             {
                 return RuleAnalysisIssue.UnsupportedSelector(
@@ -36,13 +36,21 @@ namespace TinyValidations.SourceGen.Analysis.Rules
                     requirementArgument.Expression.ToString());
             }
 
-            if (!IsSupportedArgument(invocation, 2))
+            if (!IsSupportedMessage(messageArgument))
             {
                 return RuleAnalysisIssue.UnsupportedArgument(
                     messageArgument,
                     messageArgument.Expression.ToString());
             }
 
+            return CreateRule(member, requirementMethod, messageArgument);
+        }
+
+        private RuleAnalysisResult CreateRule(
+            AnalyzedMemberAccess member,
+            string requirementMethod,
+            ArgumentSyntax messageArgument)
+        {
             var message = messageArgument.Expression.ToString();
 
             return RuleAnalysisResult.ForRule(new RuleDefinition(
@@ -55,19 +63,19 @@ namespace TinyValidations.SourceGen.Analysis.Rules
                 requirementMethod));
         }
 
-        private static bool IsSupportedArgument(InvocationExpressionSyntax invocation, int argumentIndex)
+        private AnalyzedMemberAccess? AnalyzeSelector(ArgumentSyntax selectorArgument)
         {
-            if (!HasArgument(invocation, argumentIndex))
+            return _memberAccessAnalyzer.Analyze(selectorArgument.Expression);
+        }
+
+        private static bool IsSupportedMessage(ArgumentSyntax messageArgument)
+        {
+            if (!(messageArgument.Expression is LiteralExpressionSyntax))
             {
                 return false;
             }
 
-            return invocation.ArgumentList.Arguments[argumentIndex].Expression is LiteralExpressionSyntax;
-        }
-
-        private static bool HasArgument(InvocationExpressionSyntax invocation, int argumentIndex)
-        {
-            return invocation.ArgumentList.Arguments.Count > argumentIndex;
+            return true;
         }
 
         private static bool IsSupportedRequirementMethod(
