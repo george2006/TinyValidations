@@ -15,12 +15,13 @@ namespace TinyValidations.SourceGen.Analysis.Rules
                 return RuleAnalysisIssue.UnsupportedSelector(invocation, invocation.ToString());
             }
 
-            var member = _memberAccessAnalyzer.Analyze(invocation.ArgumentList.Arguments[0].Expression);
+            var selectorArgument = invocation.ArgumentList.Arguments[0];
+            var member = _memberAccessAnalyzer.Analyze(selectorArgument.Expression);
             if (member == null)
             {
                 return RuleAnalysisIssue.UnsupportedSelector(
-                    invocation.ArgumentList.Arguments[0],
-                    invocation.ArgumentList.Arguments[0].Expression.ToString());
+                    selectorArgument,
+                    selectorArgument.Expression.ToString());
             }
 
             if (HasUnsupportedArgument(kind, invocation))

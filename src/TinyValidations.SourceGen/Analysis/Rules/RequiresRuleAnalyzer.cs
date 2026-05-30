@@ -17,29 +17,33 @@ namespace TinyValidations.SourceGen.Analysis.Rules
                 return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
             }
 
-            var member = _memberAccessAnalyzer.Analyze(invocation.ArgumentList.Arguments[0].Expression);
+            var selectorArgument = invocation.ArgumentList.Arguments[0];
+            var requirementArgument = invocation.ArgumentList.Arguments[1];
+            var messageArgument = invocation.ArgumentList.Arguments[2];
+
+            var member = _memberAccessAnalyzer.Analyze(selectorArgument.Expression);
             if (member == null)
             {
                 return RuleAnalysisIssue.UnsupportedSelector(
-                    invocation.ArgumentList.Arguments[0],
-                    invocation.ArgumentList.Arguments[0].Expression.ToString());
+                    selectorArgument,
+                    selectorArgument.Expression.ToString());
             }
 
-            if (!IsSupportedRequirementMethod(semanticModel, invocation.ArgumentList.Arguments[1].Expression, out var requirementMethod))
+            if (!IsSupportedRequirementMethod(semanticModel, requirementArgument.Expression, out var requirementMethod))
             {
                 return RuleAnalysisIssue.UnsupportedArgument(
-                    invocation.ArgumentList.Arguments[1],
-                    invocation.ArgumentList.Arguments[1].Expression.ToString());
+                    requirementArgument,
+                    requirementArgument.Expression.ToString());
             }
 
             if (!IsSupportedArgument(invocation, 2))
             {
                 return RuleAnalysisIssue.UnsupportedArgument(
-                    invocation.ArgumentList.Arguments[2],
-                    invocation.ArgumentList.Arguments[2].Expression.ToString());
+                    messageArgument,
+                    messageArgument.Expression.ToString());
             }
 
-            var message = invocation.ArgumentList.Arguments[2].Expression.ToString();
+            var message = messageArgument.Expression.ToString();
 
             return RuleAnalysisResult.ForRule(new RuleDefinition(
                 RuleKind.Requires,
