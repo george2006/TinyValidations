@@ -6,6 +6,7 @@ namespace TinyValidations.SourceGen.Analysis.Rules
 {
     internal sealed class RuleInvocationAnalyzer
     {
+        private readonly ValidationRulesInvocationMatcher _invocationMatcher = new ValidationRulesInvocationMatcher();
         private readonly RuleMethodMap _methodMap = new RuleMethodMap();
         private readonly MemberRuleAnalyzer _memberRuleAnalyzer = new MemberRuleAnalyzer();
         private readonly CustomRuleAnalyzer _customRuleAnalyzer = new CustomRuleAnalyzer();
@@ -22,7 +23,7 @@ namespace TinyValidations.SourceGen.Analysis.Rules
                 return null;
             }
 
-            if (!IsValidationRulesInvocation(semanticModel, memberAccess, invocation, validationRules))
+            if (!_invocationMatcher.IsMatch(semanticModel, memberAccess, invocation, validationRules))
             {
                 return null;
             }
@@ -46,27 +47,5 @@ namespace TinyValidations.SourceGen.Analysis.Rules
 
             return _memberRuleAnalyzer.Analyze(kind.Value, invocation);
         }
-
-        private static bool IsValidationRulesInvocation(
-            SemanticModel semanticModel,
-            MemberAccessExpressionSyntax memberAccess,
-            InvocationExpressionSyntax invocation,
-            INamedTypeSymbol validationRules)
-        {
-            var symbol = semanticModel.GetSymbolInfo(invocation).Symbol;
-            if (symbol is IMethodSymbol method)
-            {
-                return SymbolEqualityComparer.Default.Equals(method.ContainingType.OriginalDefinition, validationRules);
-            }
-
-            var expressionType = semanticModel.GetTypeInfo(memberAccess.Expression).Type;
-            if (!(expressionType is INamedTypeSymbol namedType))
-            {
-                return false;
-            }
-
-            return SymbolEqualityComparer.Default.Equals(namedType.OriginalDefinition, validationRules);
-        }
-
     }
 }
