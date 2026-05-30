@@ -10,13 +10,13 @@ namespace TinyValidations.SourceGen.Analysis.Rules
 
         public RuleAnalysisResult Analyze(RuleKind kind, InvocationExpressionSyntax invocation)
         {
-            if (invocation.ArgumentList.Arguments.Count == 0)
+            if (!HasSelector(invocation))
             {
                 return RuleAnalysisIssue.UnsupportedSelector(invocation, invocation.ToString());
             }
 
             var selectorArgument = invocation.ArgumentList.Arguments[0];
-            var member = _memberAccessAnalyzer.Analyze(selectorArgument.Expression);
+            var member = AnalyzeSelector(selectorArgument);
             if (member == null)
             {
                 return RuleAnalysisIssue.UnsupportedSelector(
@@ -29,6 +29,14 @@ namespace TinyValidations.SourceGen.Analysis.Rules
                 return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
             }
 
+            return CreateRule(kind, invocation, member);
+        }
+
+        private RuleAnalysisResult CreateRule(
+            RuleKind kind,
+            InvocationExpressionSyntax invocation,
+            AnalyzedMemberAccess member)
+        {
             var argument = _argumentAnalyzer.GetRuleArgument(kind, invocation);
             var message = _argumentAnalyzer.GetMessage(kind, invocation);
 
@@ -41,27 +49,46 @@ namespace TinyValidations.SourceGen.Analysis.Rules
                 string.Empty));
         }
 
+        private AnalyzedMemberAccess? AnalyzeSelector(ArgumentSyntax selectorArgument)
+        {
+            return _memberAccessAnalyzer.Analyze(selectorArgument.Expression);
+        }
+
+        private static bool HasSelector(InvocationExpressionSyntax invocation)
+        {
+            return invocation.ArgumentList.Arguments.Count > 0;
+        }
+
         private static bool HasUnsupportedArgument(RuleKind kind, InvocationExpressionSyntax invocation)
         {
+            if (HasUnsupportedValueArgument(kind, invocation))
+            {
+                return true;
+            }
+
+            return HasUnsupportedMessageArgument(kind, invocation);
+        }
+
+        private static bool HasUnsupportedValueArgument(RuleKind kind, InvocationExpressionSyntax invocation)
+        {
             var valueArgumentIndex = RuleShape.ValueArgumentIndex(kind);
-            if (valueArgumentIndex >= 0)
+            if (valueArgumentIndex < 0)
             {
-                if (!IsSupportedArgument(invocation, valueArgumentIndex))
-                {
-                    return true;
-                }
+                return false;
             }
 
+            return !IsSupportedArgument(invocation, valueArgumentIndex);
+        }
+
+        private static bool HasUnsupportedMessageArgument(RuleKind kind, InvocationExpressionSyntax invocation)
+        {
             var messageArgumentIndex = RuleShape.MessageArgumentIndex(kind);
-            if (HasArgument(invocation, messageArgumentIndex))
+            if (!HasArgument(invocation, messageArgumentIndex))
             {
-                if (!IsSupportedArgument(invocation, messageArgumentIndex))
-                {
-                    return true;
-                }
+                return false;
             }
 
-            return false;
+            return !IsSupportedArgument(invocation, messageArgumentIndex);
         }
 
         private static bool IsSupportedArgument(InvocationExpressionSyntax invocation, int argumentIndex)
