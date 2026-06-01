@@ -185,6 +185,7 @@ TinyValidations is intentionally boring in the places that matter.
 - [Extending TinyValidations](docs/extending.md)
 - [TinyDispatcher integration](docs/tinydispatcher.md)
 - [MediatR integration](docs/mediatr.md)
+- [TinySuite and sample app](docs/tiny-suite.md)
 - [Architecture](docs/architecture.md)
 - [Roadmap](docs/roadmap.md)
 
