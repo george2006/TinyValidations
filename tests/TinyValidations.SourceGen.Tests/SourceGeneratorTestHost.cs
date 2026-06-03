@@ -12,28 +12,46 @@ internal static class SourceGeneratorTestHost
         var compilation = CSharpCompilation.Create(
             "Tests",
             new[] { CSharpSyntaxTree.ParseText(source) },
-            new[]
-            {
-                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(System.Linq.Expressions.Expression).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(TinyValidations.IValidation<>).Assembly.Location)
-            },
+            GetMetadataReferences(),
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
         GeneratorDriver driver = CSharpGeneratorDriver.Create(new ValidationSourceGenerator());
-        driver = driver.RunGenerators(compilation);
+        driver = driver.RunGeneratorsAndUpdateCompilation(
+            compilation,
+            out var outputCompilation,
+            out _);
 
-        return new SourceGeneratorRun(driver.GetRunResult());
+        return new SourceGeneratorRun(driver.GetRunResult(), outputCompilation);
+    }
+
+    private static MetadataReference[] GetMetadataReferences()
+    {
+        var trustedAssemblies =
+            ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
+            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
+
+        return trustedAssemblies
+            .Concat(new[]
+            {
+                typeof(TinyValidations.IValidation<>).Assembly.Location,
+                typeof(Microsoft.Extensions.DependencyInjection.ServiceDescriptor).Assembly.Location,
+                typeof(Microsoft.Extensions.DependencyInjection.Extensions.ServiceCollectionDescriptorExtensions).Assembly.Location
+            })
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(path => MetadataReference.CreateFromFile(path))
+            .ToArray();
     }
 }
 
 internal sealed class SourceGeneratorRun
 {
     private readonly GeneratorDriverRunResult _result;
+    private readonly Compilation _compilation;
 
-    public SourceGeneratorRun(GeneratorDriverRunResult result)
+    public SourceGeneratorRun(GeneratorDriverRunResult result, Compilation compilation)
     {
         _result = result;
+        _compilation = compilation;
     }
 
     public Diagnostic SingleDiagnostic()
@@ -50,6 +68,14 @@ internal sealed class SourceGeneratorRun
     public void ShouldHaveNoDiagnostics()
     {
         Assert.Empty(_result.Diagnostics);
+    }
+
+    public void ShouldHaveNoCompilationErrors()
+    {
+        var errors = _compilation.GetDiagnostics()
+            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        Assert.Empty(errors);
     }
 
     public void ShouldGenerateNoSource()

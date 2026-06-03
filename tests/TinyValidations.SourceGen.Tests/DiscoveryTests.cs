@@ -39,6 +39,8 @@ public sealed class CreateUserValidation : IValidation<CreateUser>
 {
     public void Define(ValidationRules<CreateUser> rules)
     {
+        rules.Required(x => x.Name);
+
         var other = new OtherRules();
         other.Required(x => x.Email);
     }
@@ -53,6 +55,7 @@ public sealed class OtherRules
 
 public sealed class CreateUser
 {
+    public string? Name { get; init; }
     public string? Email { get; init; }
 }
 """;
@@ -60,6 +63,8 @@ public sealed class CreateUser
         var result = SourceGeneratorTestHost.Run(source);
         var text = result.SingleGeneratedSource();
 
+        result.ShouldHaveNoDiagnostics();
+        Assert.Contains("Name is required.", text);
         Assert.DoesNotContain("Email is required.", text);
     }
 

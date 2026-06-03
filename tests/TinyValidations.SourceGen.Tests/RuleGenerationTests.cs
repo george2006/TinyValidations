@@ -63,6 +63,7 @@ public sealed class RuleCoverageCommand
         var text = result.SingleGeneratedSource();
 
         result.ShouldHaveNoDiagnostics();
+        result.ShouldHaveNoCompilationErrors();
         Assert.Contains("if (instance.Required is null)", text);
         Assert.Contains("else if (instance.Required is string __text)", text);
         Assert.Contains("if (string.IsNullOrWhiteSpace(__text))", text);

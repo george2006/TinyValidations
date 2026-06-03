@@ -23,7 +23,7 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0006", diagnostic.Id);
     }
@@ -46,7 +46,7 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0001", diagnostic.Id);
         Assert.Equal(
@@ -75,7 +75,7 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0001", diagnostic.Id);
     }
@@ -99,7 +99,7 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0001", diagnostic.Id);
     }
@@ -124,7 +124,7 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0002", diagnostic.Id);
     }
@@ -149,7 +149,7 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0003", diagnostic.Id);
     }
@@ -175,7 +175,7 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0004", diagnostic.Id);
     }
@@ -201,7 +201,7 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0004", diagnostic.Id);
     }
@@ -235,7 +235,7 @@ public sealed class CreateOrder
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0004", diagnostic.Id);
     }
@@ -268,7 +268,7 @@ public sealed class CreateOrder
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0004", diagnostic.Id);
     }
@@ -301,7 +301,7 @@ public sealed class CreateOrder
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0004", diagnostic.Id);
     }
@@ -329,8 +329,19 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0005", diagnostic.Id);
     }
+
+    private static Microsoft.CodeAnalysis.Diagnostic SingleDiagnosticWithNoSource(string source)
+    {
+        var result = SourceGeneratorTestHost.Run(source);
+        var diagnostic = result.SingleDiagnostic();
+
+        result.ShouldGenerateNoSource();
+
+        return diagnostic;
+    }
 }
+
