@@ -34,5 +34,45 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
 
             return 1;
         }
+
+        public static int MinimumArgumentCount(RuleKind kind)
+        {
+            if (kind == RuleKind.Requires)
+            {
+                return 3;
+            }
+
+            if (kind == RuleKind.Use)
+            {
+                return 0;
+            }
+
+            if (RequiresValueArgument(kind))
+            {
+                return 2;
+            }
+
+            return 1;
+        }
+
+        public static int MaximumArgumentCount(RuleKind kind)
+        {
+            if (kind == RuleKind.Requires)
+            {
+                return 3;
+            }
+
+            if (kind == RuleKind.Use)
+            {
+                return 0;
+            }
+
+            if (RequiresValueArgument(kind))
+            {
+                return 3;
+            }
+
+            return 2;
+        }
     }
 }

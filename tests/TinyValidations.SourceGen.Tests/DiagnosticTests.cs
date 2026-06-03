@@ -181,6 +181,56 @@ public sealed class CreateUser
     }
 
     [Fact]
+    public void Reports_diagnostic_when_rule_value_argument_is_missing()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateUserValidation : IValidation<CreateUser>
+{
+    public void Define(ValidationRules<CreateUser> rules)
+    {
+        rules.TextLengthAtLeast(x => x.Email);
+    }
+}
+
+public sealed class CreateUser
+{
+    public string? Email { get; init; }
+}
+""";
+
+        var diagnostic = SingleDiagnosticWithNoSource(source);
+
+        Assert.Equal("TV0004", diagnostic.Id);
+    }
+
+    [Fact]
+    public void Reports_diagnostic_when_rule_has_too_many_arguments()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateUserValidation : IValidation<CreateUser>
+{
+    public void Define(ValidationRules<CreateUser> rules)
+    {
+        rules.Required(x => x.Email, "Email is required.", "extra");
+    }
+}
+
+public sealed class CreateUser
+{
+    public string? Email { get; init; }
+}
+""";
+
+        var diagnostic = SingleDiagnosticWithNoSource(source);
+
+        Assert.Equal("TV0004", diagnostic.Id);
+    }
+
+    [Fact]
     public void Reports_diagnostic_when_message_is_not_literal()
     {
         var source = """
@@ -317,6 +367,39 @@ public static class OrderNumberRequirements
     public static bool HasOrderPrefix(string? value, string prefix)
     {
         return value is not null && value.StartsWith(prefix);
+    }
+}
+
+public sealed class CreateOrder
+{
+    public string? OrderNumber { get; init; }
+}
+""";
+
+        var diagnostic = SingleDiagnosticWithNoSource(source);
+
+        Assert.Equal("TV0004", diagnostic.Id);
+    }
+
+    [Fact]
+    public void Reports_diagnostic_when_requires_rule_has_too_many_arguments()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateOrderValidation : IValidation<CreateOrder>
+{
+    public void Define(ValidationRules<CreateOrder> rules)
+    {
+        rules.Requires(x => x.OrderNumber, OrderNumberRequirements.HasOrderPrefix, "Order number must start with ORD-.", "extra");
+    }
+}
+
+public static class OrderNumberRequirements
+{
+    public static bool HasOrderPrefix(string? value)
+    {
+        return value is not null && value.StartsWith("ORD-");
     }
 }
 

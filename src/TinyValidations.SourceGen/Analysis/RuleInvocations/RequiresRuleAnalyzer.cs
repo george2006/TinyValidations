@@ -12,7 +12,7 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             SemanticModel semanticModel,
             InvocationExpressionSyntax invocation)
         {
-            if (invocation.ArgumentList.Arguments.Count < 3)
+            if (!HasSupportedArgumentCount(invocation))
             {
                 return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
             }
@@ -67,6 +67,11 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
         private AnalyzedMemberAccess? AnalyzeSelector(ArgumentSyntax selectorArgument)
         {
             return _memberAccessAnalyzer.Analyze(selectorArgument.Expression);
+        }
+
+        private static bool HasSupportedArgumentCount(InvocationExpressionSyntax invocation)
+        {
+            return invocation.ArgumentList.Arguments.Count == RuleShape.MinimumArgumentCount(RuleKind.Requires);
         }
 
         private static bool IsSupportedMessage(ArgumentSyntax messageArgument)

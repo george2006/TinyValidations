@@ -16,9 +16,9 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             RuleKind kind,
             InvocationExpressionSyntax invocation)
         {
-            if (!HasSelector(invocation))
+            if (!HasSupportedArgumentCount(kind, invocation))
             {
-                return RuleAnalysisIssue.UnsupportedSelector(invocation, invocation.ToString());
+                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
             }
 
             var selectorArgument = invocation.ArgumentList.Arguments[0];
@@ -70,9 +70,11 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             return _memberAccessAnalyzer.Analyze(selectorArgument.Expression);
         }
 
-        private static bool HasSelector(InvocationExpressionSyntax invocation)
+        private static bool HasSupportedArgumentCount(RuleKind kind, InvocationExpressionSyntax invocation)
         {
-            return invocation.ArgumentList.Arguments.Count > 0;
+            var count = invocation.ArgumentList.Arguments.Count;
+            return count >= RuleShape.MinimumArgumentCount(kind)
+                && count <= RuleShape.MaximumArgumentCount(kind);
         }
 
         private static bool HasUnsupportedArgument(RuleKind kind, InvocationExpressionSyntax invocation)
