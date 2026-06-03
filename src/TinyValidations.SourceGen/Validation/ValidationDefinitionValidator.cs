@@ -6,18 +6,21 @@ namespace TinyValidations.SourceGen.Validation
 {
     internal sealed class ValidationDefinitionValidator
     {
-        public void Validate(
+        public bool Validate(
             ValidationDefinitionSet definitions,
             Action<Diagnostic> reportDiagnostic)
         {
+            var canGenerate = true;
+
             foreach (var issue in definitions.Issues)
             {
                 ReportIssue(issue, reportDiagnostic);
+                canGenerate = false;
             }
 
             if (definitions.Issues.Count > 0)
             {
-                return;
+                return false;
             }
 
             foreach (var definition in definitions.Validations)
@@ -28,7 +31,10 @@ namespace TinyValidations.SourceGen.Validation
                 }
 
                 ReportEmptyValidation(definition, reportDiagnostic);
+                canGenerate = false;
             }
+
+            return canGenerate;
         }
 
         private static bool HasRules(ValidationDefinition definition)
