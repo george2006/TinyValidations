@@ -30,11 +30,17 @@ namespace TinyValidations.SourceGen.Emission.Rules
             var comparison = GetComparison(rule.Kind);
             var text = GetMessageText(rule);
             var message = RuleMessage.For(rule, text);
+            var compare = CreateCompareExpression(rule);
 
-            writer.WriteLine("if (" + rule.MemberAccess + " " + comparison + " " + rule.Argument + ")");
+            writer.WriteLine("if (" + compare + " " + comparison + " 0)");
             writer.OpenBlock();
             writer.WriteLine("errors.Add(" + StringLiteral.Create(rule.MemberPath) + ", " + message + ");");
             writer.CloseBlock();
+        }
+
+        private static string CreateCompareExpression(RuleDefinition rule)
+        {
+            return "global::System.Collections.Generic.Comparer<" + rule.ComparisonTypeName + ">.Default.Compare(" + rule.MemberAccess + ", " + rule.Argument + ")";
         }
 
         private static string GetComparison(RuleKind kind)
@@ -61,20 +67,20 @@ namespace TinyValidations.SourceGen.Emission.Rules
         {
             if (rule.Kind == RuleKind.Above)
             {
-                return rule.MemberPath + " must be above " + rule.Argument + ".";
+                return rule.MemberPath + " must be above " + rule.ArgumentDisplay + ".";
             }
 
             if (rule.Kind == RuleKind.AtLeast)
             {
-                return rule.MemberPath + " must be at least " + rule.Argument + ".";
+                return rule.MemberPath + " must be at least " + rule.ArgumentDisplay + ".";
             }
 
             if (rule.Kind == RuleKind.Below)
             {
-                return rule.MemberPath + " must be below " + rule.Argument + ".";
+                return rule.MemberPath + " must be below " + rule.ArgumentDisplay + ".";
             }
 
-            return rule.MemberPath + " must be at most " + rule.Argument + ".";
+            return rule.MemberPath + " must be at most " + rule.ArgumentDisplay + ".";
         }
     }
 }

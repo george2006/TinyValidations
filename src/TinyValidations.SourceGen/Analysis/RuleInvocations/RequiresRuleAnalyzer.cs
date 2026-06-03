@@ -54,13 +54,14 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             var message = messageArgument.Expression.ToString();
 
             return RuleAnalysisResult.ForRule(new RuleDefinition(
-                RuleKind.Requires,
-                member.Path,
-                member.Access,
-                string.Empty,
-                message,
-                string.Empty,
-                requirementMethod));
+                kind: RuleKind.Requires,
+                memberPath: member.Path,
+                memberAccess: member.Access,
+                argument: string.Empty,
+                argumentDisplay: string.Empty,
+                message: message,
+                customRuleType: string.Empty,
+                requirementMethod: requirementMethod));
         }
 
         private AnalyzedMemberAccess? AnalyzeSelector(ArgumentSyntax selectorArgument)

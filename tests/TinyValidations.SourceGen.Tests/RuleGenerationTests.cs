@@ -81,18 +81,46 @@ public sealed class RuleCoverageCommand
         Assert.Contains("errors.Add(\"MinimumLength\", \"MinimumLength must contain at least 3 characters.\");", text);
         Assert.Contains("if (instance.MaximumLength.Length > 5)", text);
         Assert.Contains("errors.Add(\"MaximumLength\", \"MaximumLength must contain at most 5 characters.\");", text);
-        Assert.Contains("if (instance.Above <= 10)", text);
+        Assert.Contains("if (global::System.Collections.Generic.Comparer<int>.Default.Compare(instance.Above, 10) <= 0)", text);
         Assert.Contains("errors.Add(\"Above\", \"Above must be above 10.\");", text);
-        Assert.Contains("if (instance.AtLeast < 10)", text);
+        Assert.Contains("if (global::System.Collections.Generic.Comparer<int>.Default.Compare(instance.AtLeast, 10) < 0)", text);
         Assert.Contains("errors.Add(\"AtLeast\", \"AtLeast must be at least 10.\");", text);
-        Assert.Contains("if (instance.Below >= 10)", text);
+        Assert.Contains("if (global::System.Collections.Generic.Comparer<int>.Default.Compare(instance.Below, 10) >= 0)", text);
         Assert.Contains("errors.Add(\"Below\", \"Below must be below 10.\");", text);
-        Assert.Contains("if (instance.AtMost > 10)", text);
+        Assert.Contains("if (global::System.Collections.Generic.Comparer<int>.Default.Compare(instance.AtMost, 10) > 0)", text);
         Assert.Contains("errors.Add(\"AtMost\", \"AtMost must be at most 10.\");", text);
         Assert.Contains("if (!global::System.Text.RegularExpressions.Regex.IsMatch(instance.Pattern, \"^[A-Z]{3}$\"))", text);
         Assert.Contains("errors.Add(\"Pattern\", \"Pattern has an invalid format.\");", text);
         Assert.Contains("if (!global::RuleCoverageRequirements.StartsWithOk(instance.RequiredPrefix))", text);
         Assert.Contains("errors.Add(\"RequiredPrefix\", \"RequiredPrefix must start with OK-.\");", text);
         Assert.Contains("await _rulecoveragecustomrule.ValidateAsync(instance, errors, cancellationToken).ConfigureAwait(false);", text);
+    }
+
+    [Fact]
+    public void Comparable_rules_generate_code_for_string_values()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class SortKeyValidation : IValidation<SortKeyCommand>
+{
+    public void Define(ValidationRules<SortKeyCommand> rules)
+    {
+        rules.AtLeast(x => x.Name, "M");
+    }
+}
+
+public sealed class SortKeyCommand
+{
+    public string? Name { get; init; }
+}
+""";
+
+        var result = SourceGeneratorTestHost.Run(source);
+        var text = result.SingleGeneratedSource();
+
+        result.ShouldHaveNoDiagnostics();
+        result.ShouldHaveNoCompilationErrors();
+        Assert.Contains("global::System.Collections.Generic.Comparer<string>.Default.Compare(instance.Name, \"M\") < 0", text);
     }
 }

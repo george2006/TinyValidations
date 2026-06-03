@@ -21,6 +21,28 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             return GetArgument(invocation, messageIndex);
         }
 
+        public string GetRuleArgumentDisplay(RuleKind kind, InvocationExpressionSyntax invocation)
+        {
+            if (!RuleShape.RequiresValueArgument(kind))
+            {
+                return string.Empty;
+            }
+
+            var argumentIndex = RuleShape.ValueArgumentIndex(kind);
+            if (!HasArgument(invocation, argumentIndex))
+            {
+                return string.Empty;
+            }
+
+            var expression = invocation.ArgumentList.Arguments[argumentIndex].Expression;
+            if (expression is LiteralExpressionSyntax literal)
+            {
+                return literal.Token.ValueText;
+            }
+
+            return expression.ToString();
+        }
+
         private static string GetArgument(InvocationExpressionSyntax invocation, int argumentIndex)
         {
             if (!HasArgument(invocation, argumentIndex))

@@ -134,6 +134,20 @@ public sealed class RuleBehaviorTests
     }
 
     [Fact]
+    public async Task Comparable_rules_use_default_ordering_for_strings()
+    {
+        var validator = BuildValidator();
+
+        var invalidResult = await validator.ValidateAsync(new StringAtLeastRuleCommand("L"));
+        var boundaryResult = await validator.ValidateAsync(new StringAtLeastRuleCommand("M"));
+        var validResult = await validator.ValidateAsync(new StringAtLeastRuleCommand("N"));
+
+        AssertHasError(invalidResult, nameof(StringAtLeastRuleCommand.Value), "Value must be at least M.");
+        AssertValid(boundaryResult);
+        AssertValid(validResult);
+    }
+
+    [Fact]
     public async Task Below_rejects_values_equal_to_or_above_threshold()
     {
         var validator = BuildValidator();
@@ -321,6 +335,16 @@ public sealed class AtLeastRuleCommandValidation : IValidation<AtLeastRuleComman
     public void Define(ValidationRules<AtLeastRuleCommand> rules)
     {
         rules.AtLeast(x => x.Value, 10);
+    }
+}
+
+public sealed record StringAtLeastRuleCommand(string Value);
+
+public sealed class StringAtLeastRuleCommandValidation : IValidation<StringAtLeastRuleCommand>
+{
+    public void Define(ValidationRules<StringAtLeastRuleCommand> rules)
+    {
+        rules.AtLeast(x => x.Value, "M");
     }
 }
 
