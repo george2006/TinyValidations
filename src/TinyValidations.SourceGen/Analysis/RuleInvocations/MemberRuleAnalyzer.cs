@@ -45,7 +45,7 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             var argument = _argumentAnalyzer.GetRuleArgument(kind, invocation);
             var argumentDisplay = _argumentAnalyzer.GetRuleArgumentDisplay(kind, invocation);
             var message = _argumentAnalyzer.GetMessage(kind, invocation);
-            var comparisonTypeName = GetComparisonTypeName(semanticModel, kind, invocation);
+            var comparisonTypeName = GetComparisonTypeName(semanticModel, kind, invocation, member);
 
             return RuleAnalysisResult.ForRule(new RuleDefinition(
                 kind,
@@ -118,7 +118,8 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
         private static string GetComparisonTypeName(
             SemanticModel semanticModel,
             RuleKind kind,
-            InvocationExpressionSyntax invocation)
+            InvocationExpressionSyntax invocation,
+            AnalyzedMemberAccess member)
         {
             if (!IsComparableRule(kind))
             {
@@ -136,7 +137,35 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                 return string.Empty;
             }
 
-            return method.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            var typeArgument = method.TypeArguments[0];
+            if (RequiresNullableComparisonType(typeArgument, member))
+            {
+                return "global::System.Nullable<" + typeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + ">";
+            }
+
+            return typeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        }
+
+        private static bool RequiresNullableComparisonType(
+            ITypeSymbol type,
+            AnalyzedMemberAccess member)
+        {
+            if (!member.IsNullSafe)
+            {
+                return false;
+            }
+
+            if (type.IsReferenceType)
+            {
+                return false;
+            }
+
+            if (type.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T)
+            {
+                return false;
+            }
+
+            return type.IsValueType;
         }
 
         private static bool IsComparableRule(RuleKind kind)

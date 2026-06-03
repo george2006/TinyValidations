@@ -26,7 +26,7 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             }
 
             var path = string.Join(".", members);
-            return new AnalyzedMemberAccess(path, CreateAccess(members));
+            return new AnalyzedMemberAccess(path, CreateAccess(members), members.Count > 1);
         }
 
         private static string GetParameterName(LambdaExpressionSyntax lambda)
@@ -67,7 +67,7 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             while (current is MemberAccessExpressionSyntax memberAccess)
             {
                 members.Insert(0, memberAccess.Name.Identifier.ValueText);
-                current = memberAccess.Expression;
+                current = UnwrapNullForgivingExpression(memberAccess.Expression);
             }
 
             if (IsOriginalParameter(current, parameterName))
@@ -86,6 +86,16 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             }
 
             return identifier.Identifier.ValueText == parameterName;
+        }
+
+        private static ExpressionSyntax UnwrapNullForgivingExpression(ExpressionSyntax expression)
+        {
+            if (expression is PostfixUnaryExpressionSyntax postfix)
+            {
+                return postfix.Operand;
+            }
+
+            return expression;
         }
 
         private static string CreateAccess(List<string> members)

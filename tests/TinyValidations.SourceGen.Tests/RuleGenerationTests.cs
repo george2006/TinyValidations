@@ -123,4 +123,70 @@ public sealed class SortKeyCommand
         result.ShouldHaveNoCompilationErrors();
         Assert.Contains("global::System.Collections.Generic.Comparer<string>.Default.Compare(instance.Name, \"M\") < 0", text);
     }
+
+    [Fact]
+    public void Comparable_rules_generate_code_for_nested_value_members()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class AccountValidation : IValidation<AccountCommand>
+{
+    public void Define(ValidationRules<AccountCommand> rules)
+    {
+        rules.AtLeast(x => x.Profile.Age, 18);
+    }
+}
+
+public sealed class AccountCommand
+{
+    public AccountProfile? Profile { get; init; }
+}
+
+public sealed class AccountProfile
+{
+    public int Age { get; init; }
+}
+""";
+
+        var result = SourceGeneratorTestHost.Run(source);
+        var text = result.SingleGeneratedSource();
+
+        result.ShouldHaveNoDiagnostics();
+        result.ShouldHaveNoCompilationErrors();
+        Assert.Contains("global::System.Collections.Generic.Comparer<global::System.Nullable<int>>.Default.Compare(instance.Profile?.Age, 18) < 0", text);
+    }
+
+    [Fact]
+    public void Selectors_allow_null_forgiving_member_paths()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class AccountValidation : IValidation<AccountCommand>
+{
+    public void Define(ValidationRules<AccountCommand> rules)
+    {
+        rules.Required(x => x.Profile!.Email);
+    }
+}
+
+public sealed class AccountCommand
+{
+    public AccountProfile? Profile { get; init; }
+}
+
+public sealed class AccountProfile
+{
+    public string? Email { get; init; }
+}
+""";
+
+        var result = SourceGeneratorTestHost.Run(source);
+        var text = result.SingleGeneratedSource();
+
+        result.ShouldHaveNoDiagnostics();
+        result.ShouldHaveNoCompilationErrors();
+        Assert.Contains("errors.Add(\"Profile.Email\", \"Profile.Email is required.\");", text);
+    }
 }

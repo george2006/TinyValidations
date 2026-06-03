@@ -148,6 +148,20 @@ public sealed class RuleBehaviorTests
     }
 
     [Fact]
+    public async Task Comparable_rules_handle_null_intermediate_members_for_nested_value_paths()
+    {
+        var validator = BuildValidator();
+
+        var nullProfileResult = await validator.ValidateAsync(new NestedComparableRuleCommand(null));
+        var invalidResult = await validator.ValidateAsync(new NestedComparableRuleCommand(new NestedComparableProfile(17)));
+        var validResult = await validator.ValidateAsync(new NestedComparableRuleCommand(new NestedComparableProfile(18)));
+
+        AssertHasError(nullProfileResult, "Profile.Age", "Profile.Age must be at least 18.");
+        AssertHasError(invalidResult, "Profile.Age", "Profile.Age must be at least 18.");
+        AssertValid(validResult);
+    }
+
+    [Fact]
     public async Task Below_rejects_values_equal_to_or_above_threshold()
     {
         var validator = BuildValidator();
@@ -345,6 +359,18 @@ public sealed class StringAtLeastRuleCommandValidation : IValidation<StringAtLea
     public void Define(ValidationRules<StringAtLeastRuleCommand> rules)
     {
         rules.AtLeast(x => x.Value, "M");
+    }
+}
+
+public sealed record NestedComparableRuleCommand(NestedComparableProfile? Profile);
+
+public sealed record NestedComparableProfile(int Age);
+
+public sealed class NestedComparableRuleCommandValidation : IValidation<NestedComparableRuleCommand>
+{
+    public void Define(ValidationRules<NestedComparableRuleCommand> rules)
+    {
+        rules.AtLeast(x => x.Profile!.Age, 18);
     }
 }
 
