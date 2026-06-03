@@ -144,6 +144,32 @@ public sealed class ValidationBehaviorTests
     }
 
     [Fact]
+    public async Task Multiple_custom_rules_for_the_same_command_are_aggregated()
+    {
+        var validator = BuildValidator();
+        var command = new PublishArticle(string.Empty);
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.False(result.IsValid);
+        AssertHasErrorWithMessage(result, nameof(PublishArticle.Title), "Title is required by first rule.");
+        AssertHasErrorWithMessage(result, nameof(PublishArticle.Title), "Title is required by second rule.");
+    }
+
+    [Fact]
+    public async Task Duplicate_custom_rule_declarations_are_invoked_once()
+    {
+        var validator = BuildValidator();
+        var command = new ReviewArticle(string.Empty);
+
+        var result = await validator.ValidateAsync(command);
+
+        Assert.False(result.IsValid);
+        Assert.Equal(1, CountErrors(result, nameof(ReviewArticle.Title)));
+        AssertHasError(result, nameof(ReviewArticle.Title), "Title is required.");
+    }
+
+    [Fact]
     public async Task Multiple_validations_for_the_same_command_are_aggregated()
     {
         var validator = BuildValidator();
@@ -265,6 +291,19 @@ public sealed class ValidationBehaviorTests
         }
 
         Assert.Fail("Expected validation error for " + member + ".");
+    }
+
+    private static void AssertHasErrorWithMessage(ValidationResult result, string member, string message)
+    {
+        foreach (var error in result.Errors)
+        {
+            if (error.Member == member && error.Message == message)
+            {
+                return;
+            }
+        }
+
+        Assert.Fail("Expected validation error for " + member + " with message '" + message + "'.");
     }
 
     private static int CountErrors(ValidationResult result, string member)
@@ -419,6 +458,76 @@ public sealed class ReservedTeamNameStore
     public bool IsReserved(string name)
     {
         return name == "admin";
+    }
+}
+
+public sealed record PublishArticle(string Title);
+
+public sealed class PublishArticleValidation : IValidation<PublishArticle>
+{
+    public void Define(ValidationRules<PublishArticle> rules)
+    {
+        rules.Use<PublishArticleFirstRule>();
+        rules.Use<PublishArticleSecondRule>();
+    }
+}
+
+public sealed class PublishArticleFirstRule : IAsyncValidationRule<PublishArticle>
+{
+    public ValueTask ValidateAsync(
+        PublishArticle instance,
+        ValidationErrorCollection errors,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(instance.Title))
+        {
+            errors.Add(nameof(PublishArticle.Title), "Title is required by first rule.");
+        }
+
+        return ValueTask.CompletedTask;
+    }
+}
+
+public sealed class PublishArticleSecondRule : IAsyncValidationRule<PublishArticle>
+{
+    public ValueTask ValidateAsync(
+        PublishArticle instance,
+        ValidationErrorCollection errors,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(instance.Title))
+        {
+            errors.Add(nameof(PublishArticle.Title), "Title is required by second rule.");
+        }
+
+        return ValueTask.CompletedTask;
+    }
+}
+
+public sealed record ReviewArticle(string Title);
+
+public sealed class ReviewArticleValidation : IValidation<ReviewArticle>
+{
+    public void Define(ValidationRules<ReviewArticle> rules)
+    {
+        rules.Use<ReviewArticleTitleRule>();
+        rules.Use<ReviewArticleTitleRule>();
+    }
+}
+
+public sealed class ReviewArticleTitleRule : IAsyncValidationRule<ReviewArticle>
+{
+    public ValueTask ValidateAsync(
+        ReviewArticle instance,
+        ValidationErrorCollection errors,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(instance.Title))
+        {
+            errors.Add(nameof(ReviewArticle.Title), "Title is required.");
+        }
+
+        return ValueTask.CompletedTask;
     }
 }
 

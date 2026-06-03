@@ -148,4 +148,59 @@ public sealed class CreateOrder
         Assert.Contains("if (!global::OrderNumberRequirements.HasOrderPrefix(instance.OrderNumber))", text);
         Assert.Contains("errors.Add(\"OrderNumber\", \"Order number must start with ORD-.\");", text);
     }
+
+    [Fact]
+    public void Deduplicates_duplicate_custom_rule_calls()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateUserValidation : IValidation<CreateUser>
+{
+    public void Define(ValidationRules<CreateUser> rules)
+    {
+        rules.Use<UniqueEmailRule>();
+        rules.Use<UniqueEmailRule>();
+    }
+}
+
+public sealed class UniqueEmailRule : IAsyncValidationRule<CreateUser>
+{
+    public System.Threading.Tasks.ValueTask ValidateAsync(CreateUser instance, ValidationErrorCollection errors, System.Threading.CancellationToken cancellationToken) => System.Threading.Tasks.ValueTask.CompletedTask;
+}
+
+public sealed class CreateUser
+{
+}
+""";
+
+        var result = SourceGeneratorTestHost.Run(source);
+        var text = result.SingleGeneratedSource();
+
+        result.ShouldHaveNoDiagnostics();
+        result.ShouldHaveNoCompilationErrors();
+        Assert.Equal(1, CountOccurrences(text, "private readonly global::UniqueEmailRule _uniqueemailrule;"));
+        Assert.Equal(1, CountOccurrences(text, "global::UniqueEmailRule uniqueemailrule)"));
+        Assert.Equal(1, CountOccurrences(text, "await _uniqueemailrule.ValidateAsync(instance, errors, cancellationToken).ConfigureAwait(false);"));
+    }
+
+    private static int CountOccurrences(string text, string value)
+    {
+        var count = 0;
+        var index = 0;
+
+        while (index < text.Length)
+        {
+            index = text.IndexOf(value, index, StringComparison.Ordinal);
+            if (index < 0)
+            {
+                return count;
+            }
+
+            count++;
+            index += value.Length;
+        }
+
+        return count;
+    }
 }
