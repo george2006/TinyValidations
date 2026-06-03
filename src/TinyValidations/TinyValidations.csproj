@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <PackageId>TinyValidations</PackageId>
-    <Version>0.1.0-beta.1</Version>
+    <Version>1.0.0-rc.1</Version>
     <Authors>Jorge Durban Antunano</Authors>
     <Description>Small compile-time validation for application-layer commands, with generated runners, DI-friendly custom rules, and pipeline-friendly validation primitives.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -10,7 +10,7 @@
     <RepositoryUrl>https://github.com/george2006/TinyValidations</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>validation;source-generator;dotnet;dependency-injection;aspnetcore;mediatr;tinydispatcher</PackageTags>
-    <PackageReleaseNotes>First beta release of TinyValidations. Hardens source generator diagnostics, covers generated validation behavior, supports null-safe nested member paths, and includes DI-friendly custom rules plus ASP.NET samples for TinyDispatcher and MediatR.</PackageReleaseNotes>
+    <PackageReleaseNotes>TinyValidations 1.0.0-rc.1 is the release candidate for the core compile-time validation package. This RC is focused on confidence: source-generator diagnostics fail invalid declarations before generation, generated source is covered by compile-backed tests, every built-in rule has runtime and generator coverage, comparable rules use IComparable&lt;T&gt; with default ordering, nested member paths are null-safe, regex patterns are validated during generation, duplicate custom rule declarations are deduplicated, and multi-assembly validation contributions are covered by tests and samples.</PackageReleaseNotes>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
