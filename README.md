@@ -4,7 +4,7 @@ TinyValidations is a small compile-time validation library for application-layer
 
 It was built for TinyDispatcher-style applications first: define a command, define its validation, register services, and let generated code do the boring work before the handler runs. Native ASP.NET integration is planned, but the core package is intentionally host-agnostic.
 
-> Status: preparing for 1.0. The core package is intentionally small and host-agnostic. Native host integrations may ship separately.
+> Status: 1.0 release candidate. The core package is intentionally small and host-agnostic. Native host integrations may ship separately.
 
 ## Contents
 
@@ -37,7 +37,7 @@ The goal is not to be a huge validation framework. The goal is calm command vali
 Install the current package:
 
 ```bash
-dotnet add package TinyValidations --version 0.1.0-beta.1
+dotnet add package TinyValidations --version 1.0.0-rc.1
 ```
 
 Then register TinyValidations:
