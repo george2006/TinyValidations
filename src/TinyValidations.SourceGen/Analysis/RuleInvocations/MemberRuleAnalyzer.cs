@@ -1,3 +1,5 @@
+using System;
+using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using TinyValidations.SourceGen.Model;
@@ -29,6 +31,11 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             }
 
             if (HasUnsupportedArgument(kind, invocation))
+            {
+                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
+            }
+
+            if (HasInvalidRegexPattern(kind, invocation))
             {
                 return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
             }
@@ -113,6 +120,36 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
         private static bool HasArgument(InvocationExpressionSyntax invocation, int argumentIndex)
         {
             return invocation.ArgumentList.Arguments.Count > argumentIndex;
+        }
+
+        private static bool HasInvalidRegexPattern(RuleKind kind, InvocationExpressionSyntax invocation)
+        {
+            if (kind != RuleKind.Matches)
+            {
+                return false;
+            }
+
+            var argumentIndex = RuleShape.ValueArgumentIndex(kind);
+            if (!HasArgument(invocation, argumentIndex))
+            {
+                return true;
+            }
+
+            var expression = invocation.ArgumentList.Arguments[argumentIndex].Expression;
+            if (!(expression is LiteralExpressionSyntax literal))
+            {
+                return true;
+            }
+
+            try
+            {
+                _ = new Regex(literal.Token.ValueText);
+                return false;
+            }
+            catch (ArgumentException)
+            {
+                return true;
+            }
         }
 
         private static string GetComparisonTypeName(

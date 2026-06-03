@@ -125,6 +125,34 @@ public sealed class SortKeyCommand
     }
 
     [Fact]
+    public void Matches_rules_generate_code_for_valid_regex_patterns()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CodeValidation : IValidation<CodeCommand>
+{
+    public void Define(ValidationRules<CodeCommand> rules)
+    {
+        rules.Matches(x => x.Code, "^[A-Z]{3}$");
+    }
+}
+
+public sealed class CodeCommand
+{
+    public string? Code { get; init; }
+}
+""";
+
+        var result = SourceGeneratorTestHost.Run(source);
+        var text = result.SingleGeneratedSource();
+
+        result.ShouldHaveNoDiagnostics();
+        result.ShouldHaveNoCompilationErrors();
+        Assert.Contains("global::System.Text.RegularExpressions.Regex.IsMatch(instance.Code, \"^[A-Z]{3}$\")", text);
+    }
+
+    [Fact]
     public void Comparable_rules_generate_code_for_nested_value_members()
     {
         var source = """

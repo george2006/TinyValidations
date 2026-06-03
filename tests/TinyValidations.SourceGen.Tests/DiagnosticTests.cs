@@ -207,6 +207,31 @@ public sealed class CreateUser
     }
 
     [Fact]
+    public void Reports_diagnostic_when_matches_pattern_is_invalid()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateUserValidation : IValidation<CreateUser>
+{
+    public void Define(ValidationRules<CreateUser> rules)
+    {
+        rules.Matches(x => x.Code, "[");
+    }
+}
+
+public sealed class CreateUser
+{
+    public string? Code { get; init; }
+}
+""";
+
+        var diagnostic = SingleDiagnosticWithNoSource(source);
+
+        Assert.Equal("TV0004", diagnostic.Id);
+    }
+
+    [Fact]
     public void Reports_diagnostic_when_requires_method_is_not_static()
     {
         var source = """
