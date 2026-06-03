@@ -1,3 +1,6 @@
+using System;
+using System.Text.RegularExpressions;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using TinyValidations.SourceGen.Model;
 
@@ -8,11 +11,14 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
         private readonly MemberAccessAnalyzer _memberAccessAnalyzer = new MemberAccessAnalyzer();
         private readonly RuleArgumentAnalyzer _argumentAnalyzer = new RuleArgumentAnalyzer();
 
-        public RuleAnalysisResult Analyze(RuleKind kind, InvocationExpressionSyntax invocation)
+        public RuleAnalysisResult Analyze(
+            SemanticModel semanticModel,
+            RuleKind kind,
+            InvocationExpressionSyntax invocation)
         {
-            if (!HasSelector(invocation))
+            if (!HasSupportedArgumentCount(kind, invocation))
             {
-                return RuleAnalysisIssue.UnsupportedSelector(invocation, invocation.ToString());
+                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
             }
 
             var selectorArgument = invocation.ArgumentList.Arguments[0];
@@ -29,24 +35,34 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                 return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
             }
 
-            return CreateRule(kind, invocation, member);
+            if (HasInvalidRegexPattern(kind, invocation))
+            {
+                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
+            }
+
+            return CreateRule(semanticModel, kind, invocation, member);
         }
 
         private RuleAnalysisResult CreateRule(
+            SemanticModel semanticModel,
             RuleKind kind,
             InvocationExpressionSyntax invocation,
             AnalyzedMemberAccess member)
         {
             var argument = _argumentAnalyzer.GetRuleArgument(kind, invocation);
+            var argumentDisplay = _argumentAnalyzer.GetRuleArgumentDisplay(kind, invocation);
             var message = _argumentAnalyzer.GetMessage(kind, invocation);
+            var comparisonTypeName = GetComparisonTypeName(semanticModel, kind, invocation, member);
 
             return RuleAnalysisResult.ForRule(new RuleDefinition(
                 kind,
                 member.Path,
                 member.Access,
                 argument,
+                argumentDisplay,
                 message,
-                string.Empty));
+                string.Empty,
+                comparisonTypeName: comparisonTypeName));
         }
 
         private AnalyzedMemberAccess? AnalyzeSelector(ArgumentSyntax selectorArgument)
@@ -54,9 +70,11 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             return _memberAccessAnalyzer.Analyze(selectorArgument.Expression);
         }
 
-        private static bool HasSelector(InvocationExpressionSyntax invocation)
+        private static bool HasSupportedArgumentCount(RuleKind kind, InvocationExpressionSyntax invocation)
         {
-            return invocation.ArgumentList.Arguments.Count > 0;
+            var count = invocation.ArgumentList.Arguments.Count;
+            return count >= RuleShape.MinimumArgumentCount(kind)
+                && count <= RuleShape.MaximumArgumentCount(kind);
         }
 
         private static bool HasUnsupportedArgument(RuleKind kind, InvocationExpressionSyntax invocation)
@@ -104,6 +122,109 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
         private static bool HasArgument(InvocationExpressionSyntax invocation, int argumentIndex)
         {
             return invocation.ArgumentList.Arguments.Count > argumentIndex;
+        }
+
+        private static bool HasInvalidRegexPattern(RuleKind kind, InvocationExpressionSyntax invocation)
+        {
+            if (kind != RuleKind.Matches)
+            {
+                return false;
+            }
+
+            var argumentIndex = RuleShape.ValueArgumentIndex(kind);
+            if (!HasArgument(invocation, argumentIndex))
+            {
+                return true;
+            }
+
+            var expression = invocation.ArgumentList.Arguments[argumentIndex].Expression;
+            if (!(expression is LiteralExpressionSyntax literal))
+            {
+                return true;
+            }
+
+            try
+            {
+                _ = new Regex(literal.Token.ValueText);
+                return false;
+            }
+            catch (ArgumentException)
+            {
+                return true;
+            }
+        }
+
+        private static string GetComparisonTypeName(
+            SemanticModel semanticModel,
+            RuleKind kind,
+            InvocationExpressionSyntax invocation,
+            AnalyzedMemberAccess member)
+        {
+            if (!IsComparableRule(kind))
+            {
+                return string.Empty;
+            }
+
+            var symbol = semanticModel.GetSymbolInfo(invocation).Symbol;
+            if (!(symbol is IMethodSymbol method))
+            {
+                return string.Empty;
+            }
+
+            if (method.TypeArguments.Length != 1)
+            {
+                return string.Empty;
+            }
+
+            var typeArgument = method.TypeArguments[0];
+            if (RequiresNullableComparisonType(typeArgument, member))
+            {
+                return "global::System.Nullable<" + typeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + ">";
+            }
+
+            return typeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        }
+
+        private static bool RequiresNullableComparisonType(
+            ITypeSymbol type,
+            AnalyzedMemberAccess member)
+        {
+            if (!member.IsNullSafe)
+            {
+                return false;
+            }
+
+            if (type.IsReferenceType)
+            {
+                return false;
+            }
+
+            if (type.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T)
+            {
+                return false;
+            }
+
+            return type.IsValueType;
+        }
+
+        private static bool IsComparableRule(RuleKind kind)
+        {
+            if (kind == RuleKind.Above)
+            {
+                return true;
+            }
+
+            if (kind == RuleKind.AtLeast)
+            {
+                return true;
+            }
+
+            if (kind == RuleKind.Below)
+            {
+                return true;
+            }
+
+            return kind == RuleKind.AtMost;
         }
     }
 }

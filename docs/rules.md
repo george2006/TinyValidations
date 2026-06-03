@@ -72,7 +72,7 @@ rules.TextLengthAtMost(x => x.Name, 100);
 
 Null values are ignored by text length rules. Use `Required`, `HasText`, or `NotNull` when needed.
 
-## Numeric And Comparable Rules
+## Comparable Rules
 
 ```csharp
 rules.Above(x => x.Age, 17);
@@ -80,6 +80,12 @@ rules.AtLeast(x => x.Age, 18);
 rules.Below(x => x.Age, 130);
 rules.AtMost(x => x.Age, 129);
 ```
+
+Comparison rules support values that implement `IComparable<T>`. Generated code uses `Comparer<T>.Default`, so numeric values, dates, times, strings, and custom comparable value objects use their default ordering.
+
+For strings, comparison is ordering comparison, not length validation. Use `TextLengthAtLeast`, `TextLengthAtMost`, `HasText`, or `Matches` for text-specific validation.
+
+Nullable reference values are compared with the default comparer. For example, `AtLeast(x => x.Name, "M")` treats `null` as below `"M"`. Use `Required`, `HasText`, or `NotNull` when the value must be present.
 
 ## Matches
 

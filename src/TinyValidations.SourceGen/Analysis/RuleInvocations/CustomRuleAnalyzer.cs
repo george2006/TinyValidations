@@ -35,12 +35,13 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
         private static RuleAnalysisResult CreateRule(string customRuleType)
         {
             return RuleAnalysisResult.ForRule(new RuleDefinition(
-                RuleKind.Use,
-                string.Empty,
-                string.Empty,
-                string.Empty,
-                string.Empty,
-                customRuleType));
+                kind: RuleKind.Use,
+                memberPath: string.Empty,
+                memberAccess: string.Empty,
+                argument: string.Empty,
+                argumentDisplay: string.Empty,
+                message: string.Empty,
+                customRuleType: customRuleType));
         }
 
         private static bool HasSingleTypeArgument(GenericNameSyntax genericName)

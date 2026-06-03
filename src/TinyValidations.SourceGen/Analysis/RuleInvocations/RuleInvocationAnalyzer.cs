@@ -60,7 +60,7 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                 return _requiresRuleAnalyzer.Analyze(semanticModel, invocation);
             }
 
-            return _memberRuleAnalyzer.Analyze(ruleKind, invocation);
+            return _memberRuleAnalyzer.Analyze(semanticModel, ruleKind, invocation);
         }
     }
 }

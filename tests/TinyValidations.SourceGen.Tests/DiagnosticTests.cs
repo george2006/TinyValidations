@@ -23,7 +23,7 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0006", diagnostic.Id);
     }
@@ -46,7 +46,7 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0001", diagnostic.Id);
         Assert.Equal(
@@ -75,7 +75,7 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0001", diagnostic.Id);
     }
@@ -99,7 +99,7 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0001", diagnostic.Id);
     }
@@ -124,7 +124,7 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0002", diagnostic.Id);
     }
@@ -149,7 +149,7 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0003", diagnostic.Id);
     }
@@ -175,7 +175,57 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
+
+        Assert.Equal("TV0004", diagnostic.Id);
+    }
+
+    [Fact]
+    public void Reports_diagnostic_when_rule_value_argument_is_missing()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateUserValidation : IValidation<CreateUser>
+{
+    public void Define(ValidationRules<CreateUser> rules)
+    {
+        rules.TextLengthAtLeast(x => x.Email);
+    }
+}
+
+public sealed class CreateUser
+{
+    public string? Email { get; init; }
+}
+""";
+
+        var diagnostic = SingleDiagnosticWithNoSource(source);
+
+        Assert.Equal("TV0004", diagnostic.Id);
+    }
+
+    [Fact]
+    public void Reports_diagnostic_when_rule_has_too_many_arguments()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateUserValidation : IValidation<CreateUser>
+{
+    public void Define(ValidationRules<CreateUser> rules)
+    {
+        rules.Required(x => x.Email, "Email is required.", "extra");
+    }
+}
+
+public sealed class CreateUser
+{
+    public string? Email { get; init; }
+}
+""";
+
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0004", diagnostic.Id);
     }
@@ -201,7 +251,32 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
+
+        Assert.Equal("TV0004", diagnostic.Id);
+    }
+
+    [Fact]
+    public void Reports_diagnostic_when_matches_pattern_is_invalid()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateUserValidation : IValidation<CreateUser>
+{
+    public void Define(ValidationRules<CreateUser> rules)
+    {
+        rules.Matches(x => x.Code, "[");
+    }
+}
+
+public sealed class CreateUser
+{
+    public string? Code { get; init; }
+}
+""";
+
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0004", diagnostic.Id);
     }
@@ -235,7 +310,7 @@ public sealed class CreateOrder
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0004", diagnostic.Id);
     }
@@ -268,7 +343,7 @@ public sealed class CreateOrder
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0004", diagnostic.Id);
     }
@@ -301,7 +376,40 @@ public sealed class CreateOrder
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
+
+        Assert.Equal("TV0004", diagnostic.Id);
+    }
+
+    [Fact]
+    public void Reports_diagnostic_when_requires_rule_has_too_many_arguments()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateOrderValidation : IValidation<CreateOrder>
+{
+    public void Define(ValidationRules<CreateOrder> rules)
+    {
+        rules.Requires(x => x.OrderNumber, OrderNumberRequirements.HasOrderPrefix, "Order number must start with ORD-.", "extra");
+    }
+}
+
+public static class OrderNumberRequirements
+{
+    public static bool HasOrderPrefix(string? value)
+    {
+        return value is not null && value.StartsWith("ORD-");
+    }
+}
+
+public sealed class CreateOrder
+{
+    public string? OrderNumber { get; init; }
+}
+""";
+
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0004", diagnostic.Id);
     }
@@ -329,8 +437,19 @@ public sealed class CreateUser
 }
 """;
 
-        var diagnostic = SourceGeneratorTestHost.Run(source).SingleDiagnostic();
+        var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0005", diagnostic.Id);
     }
+
+    private static Microsoft.CodeAnalysis.Diagnostic SingleDiagnosticWithNoSource(string source)
+    {
+        var result = SourceGeneratorTestHost.Run(source);
+        var diagnostic = result.SingleDiagnostic();
+
+        result.ShouldGenerateNoSource();
+
+        return diagnostic;
+    }
 }
+
