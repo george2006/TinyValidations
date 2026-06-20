@@ -18,7 +18,7 @@ TinyValidations is designed to stay small enough to understand.
 - Generated runners use direct C# checks for built-in rules.
 - Custom async rules are the extension point for business logic and scoped services.
 - Dependency injection registration must be idempotent and predictable.
-- Public contracts should stay small before 1.0.
+- Public contracts should stay small and stable.
 - Tests should protect user-visible behavior, not private helper trivia.
 
 ## Runtime Project

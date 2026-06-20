@@ -7,10 +7,10 @@ This guide shows the basic TinyValidations flow.
 Install TinyValidations:
 
 ```bash
-dotnet add package TinyValidations --version 1.0.0-rc.1
+dotnet add package TinyValidations
 ```
 
-The package is in 1.0 release candidate status. For local development, reference the project directly.
+For local development, reference the project directly.
 
 ## Register Services
 

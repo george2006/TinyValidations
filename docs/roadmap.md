@@ -1,15 +1,14 @@
 # Roadmap
 
-TinyValidations is preparing for 1.0.
+TinyValidations has a stable 1.0 core package.
 
 This roadmap describes the expected direction, not a compatibility promise.
 
 ## Near Term
 
-- Final public API review.
-- Final documentation review.
-- Release package metadata review.
 - Keep adding behavioral tests only where they protect user-visible contracts.
+- Keep the stable core small while integrations evolve separately.
+- Improve documentation where real usage exposes unclear edges.
 
 ## TinyDispatcher
 
