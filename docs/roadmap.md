@@ -40,5 +40,4 @@ This roadmap describes the expected direction, not a compatibility promise.
 - Completed validation enriches the current activity with aggregate outcome and failure
   count without emitting error detail.
 - Standalone validation does not create an activity.
-- Define rejected-operation ownership with each integration before changing an operation's
-  semantic outcome.
+- Keep application operation outcome ownership with the dispatcher, mediator, or host.

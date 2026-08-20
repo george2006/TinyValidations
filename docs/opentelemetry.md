@@ -10,7 +10,7 @@ tiny.validation.failure.count number of collected validation errors
 
 This works with an activity created by TinyDispatcher, MediatR instrumentation, ASP.NET
 Core, or application code. TinyValidations does not require an OpenTelemetry package to
-write these standard `Activity` tags.
+write these `Activity` tags.
 
 TinyValidations does not create an activity when validation runs without a current
 activity. It also does not emit one activity per validation, validator, or rule.
@@ -20,6 +20,6 @@ names, and validation messages are not emitted. If a validation runner throws or
 canceled before producing a result, TinyValidations does not record a completed validation
 outcome.
 
-Changing an owning application operation from failure to rejected requires an explicit
-contract with that operation's instrumentation. TinyValidations does not overwrite
-`tiny.operation.outcome` on its own.
+Validation telemetry explains the validation result; it does not change the outcome of
+the owning application operation. A dispatcher, mediator, or host remains responsible for
+its own success, failure, and cancellation semantics.
