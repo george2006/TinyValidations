@@ -6,6 +6,8 @@ It was built for TinyDispatcher-style applications first: define a command, defi
 
 > Status: 1.0 stable. The core package is intentionally small and host-agnostic. Native host integrations may ship separately.
 
+> Preview: 1.1.0-beta.1 adds aggregate validation result enrichment to the current `Activity` without creating spans or adding an OpenTelemetry package dependency.
+
 ## Contents
 
 - [Why TinyValidations?](#why-tinyvalidations)

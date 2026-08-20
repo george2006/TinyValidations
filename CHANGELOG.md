@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.0-beta.1 - 2026-08-20
+
+### Added
+- Aggregate validation outcome and failure count on the current `Activity`.
+- Behavioral coverage for successful, failed, standalone, and exceptional validation.
+- OpenTelemetry usage and privacy documentation.
+
+### Notes
+- TinyValidations does not create activities or require an OpenTelemetry package.
+- Validation member paths, messages, rule names, and attempted values are not emitted.
+- The owning host or dispatcher remains responsible for its operation outcome.
+
 ## 1.0.0 - 2026-06-20
 
 ### Added
@@ -17,4 +29,3 @@
 - The core package remains host-agnostic.
 - TinyDispatcher, MediatR, and ASP.NET integration shapes are demonstrated through samples.
 - Native host integration packages may ship separately so the core stays small.
-
