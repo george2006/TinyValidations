@@ -187,6 +187,7 @@ TinyValidations is intentionally boring in the places that matter.
 - [TinyDispatcher integration](docs/tinydispatcher.md)
 - [MediatR integration](docs/mediatr.md)
 - [TinySuite and sample app](docs/tiny-suite.md)
+- [OpenTelemetry](docs/opentelemetry.md)
 - [Architecture](docs/architecture.md)
 - [Roadmap](docs/roadmap.md)
 

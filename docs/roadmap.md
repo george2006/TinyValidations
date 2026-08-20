@@ -34,3 +34,11 @@ This roadmap describes the expected direction, not a compatibility promise.
 - Keep `ValidationErrorCollection` as the small public custom-rule error contract for 1.0.
 - Keep bootstrap registration idempotent per service collection.
 - Add more built-in helper rules only when they stay small and boring.
+
+## OpenTelemetry
+
+- Completed validation enriches the current activity with aggregate outcome and failure
+  count without emitting error detail.
+- Standalone validation does not create an activity.
+- Define rejected-operation ownership with each integration before changing an operation's
+  semantic outcome.

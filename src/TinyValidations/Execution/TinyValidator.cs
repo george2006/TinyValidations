@@ -26,10 +26,12 @@ internal sealed class TinyValidator : ITinyValidator
 
         foreach (var runner in runners)
         {
-            var result = await runner.ValidateAsync(instance, cancellationToken).ConfigureAwait(false);
-            errors.AddRange(result.Errors);
+            var runnerResult = await runner.ValidateAsync(instance, cancellationToken).ConfigureAwait(false);
+            errors.AddRange(runnerResult.Errors);
         }
 
-        return errors.ToResult();
+        var validationResult = errors.ToResult();
+        ValidationTelemetry.RecordResult(validationResult);
+        return validationResult;
     }
 }
