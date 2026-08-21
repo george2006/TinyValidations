@@ -15,6 +15,7 @@ It was built for TinyDispatcher-style applications first: define a command, defi
 - [Validation declarations](#validation-declarations)
 - [Custom rules](#custom-rules)
 - [TinyDispatcher](#tinydispatcher)
+- [Tiny suite](#tiny-suite)
 - [Design principles](#design-principles)
 - [Documentation](#documentation)
 - [Current limitations](#current-limitations)
@@ -166,6 +167,16 @@ Read more in [TinyDispatcher integration](docs/tinydispatcher.md).
 See [`samples/TinyDispatcherAspNetCore`](samples/TinyDispatcherAspNetCore) for a minimal ASP.NET sample that wires TinyValidations into TinyDispatcher middleware and maps validation failures to problem details.
 
 See [`samples/MediatRAspNetCore`](samples/MediatRAspNetCore) for the same application shape using a MediatR pipeline behavior.
+
+## Tiny suite
+
+TinyValidations belongs to the Tiny suite. Each library owns one application-layer responsibility:
+
+- [TinyDispatcher](https://github.com/george2006/TinyDispatcher) owns command and query execution.
+- [TinyValidations](https://github.com/george2006/TinyValidations) owns application input validation.
+- [TinyEvents](https://github.com/george2006/TinyEvents) owns reliable application-event handling through the outbox pattern.
+
+The libraries can be adopted independently. Using one does not require referencing the other two.
 
 ## Design principles
 
