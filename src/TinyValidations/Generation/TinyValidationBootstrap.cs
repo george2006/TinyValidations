@@ -8,6 +8,8 @@ public static class TinyValidationBootstrap
 {
     private static readonly object SyncRoot = new object();
     private static readonly List<ITinyValidationContribution> Contributions = new List<ITinyValidationContribution>();
+    private static readonly Dictionary<Type, Lazy<TinyValidationStructure[]>> ValidationStructures =
+        new Dictionary<Type, Lazy<TinyValidationStructure[]>>();
 
     public static void AddContribution(ITinyValidationContribution contribution)
     {
@@ -57,23 +59,48 @@ public static class TinyValidationBootstrap
     public static IReadOnlyList<TinyValidationStructure> GetValidations()
     {
         var validations = new List<TinyValidationStructure>();
-        ITinyValidationContribution[] snapshot;
+        var structures = new List<Lazy<TinyValidationStructure[]>>();
 
         lock (SyncRoot)
         {
-            snapshot = Contributions.ToArray();
+            foreach (var contribution in Contributions)
+            {
+                if (contribution is ITinyValidationStructureContribution structureContribution)
+                {
+                    structures.Add(GetOrAddValidationStructure(structureContribution));
+                }
+            }
         }
 
-        foreach (var contribution in snapshot)
+        foreach (var structure in structures)
         {
-            if (contribution is ITinyValidationStructureContribution structureContribution)
-            {
-                validations.AddRange(structureContribution.Validations);
-            }
+            validations.AddRange(structure.Value);
         }
 
         validations.Sort(CompareValidations);
         return validations.ToArray();
+    }
+
+    private static Lazy<TinyValidationStructure[]> GetOrAddValidationStructure(
+        ITinyValidationStructureContribution contribution)
+    {
+        var contributionType = contribution.GetType();
+
+        if (ValidationStructures.TryGetValue(contributionType, out var structure))
+        {
+            return structure;
+        }
+
+        structure = new Lazy<TinyValidationStructure[]>(() =>
+        {
+            var validations = contribution.Validations
+                ?? throw new InvalidOperationException("The validation structure contribution returned null.");
+
+            return validations.ToArray();
+        });
+
+        ValidationStructures.Add(contributionType, structure);
+        return structure;
     }
 
     private static int CompareValidations(

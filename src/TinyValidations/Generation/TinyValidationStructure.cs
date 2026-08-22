@@ -24,10 +24,11 @@ public sealed class TinyValidationStructure
 
         ValidatedTypeIdentity = GetIdentity(validatedType, nameof(validatedType));
         DeclarationIdentity = GetIdentity(declarationType, nameof(declarationType));
-        Rules = rules.ToArray();
-        CustomRuleIdentities = customRuleTypes
-            .Select(type => GetIdentity(type, nameof(customRuleTypes)))
-            .ToArray();
+        Rules = Array.AsReadOnly(rules.ToArray());
+        CustomRuleIdentities = Array.AsReadOnly(
+            customRuleTypes
+                .Select(type => GetIdentity(type, nameof(customRuleTypes)))
+                .ToArray());
     }
 
     public string ValidatedTypeIdentity { get; }

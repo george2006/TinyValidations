@@ -182,8 +182,6 @@ public sealed class RuntimeTests
             snapshot,
             candidate => candidate.ValidatedTypeIdentity == typeof(CreateTeam).FullName);
         Assert.Contains(typeof(ReservedTeamNameRule).FullName, customValidation.CustomRuleIdentities);
-
-        Assert.NotSame(snapshot, TinyValidationBootstrap.GetValidations());
     }
 
     [Fact]
@@ -206,6 +204,39 @@ public sealed class RuntimeTests
     }
 
     [Fact]
+    public void Validation_structure_rules_cannot_be_modified()
+    {
+        var original = new TinyValidationRuleStructure("Name", "Required");
+        var structure = new TinyValidationStructure(
+            typeof(CreateTeam),
+            typeof(CreateTeamValidation),
+            new[] { original },
+            Array.Empty<Type>());
+        var rules = Assert.IsAssignableFrom<IList<TinyValidationRuleStructure>>(structure.Rules);
+
+        Assert.Throws<NotSupportedException>(
+            () => rules[0] = new TinyValidationRuleStructure("Changed", "Email"));
+        Assert.Same(original, Assert.Single(structure.Rules));
+    }
+
+    [Fact]
+    public void Validation_structure_custom_rule_identities_cannot_be_modified()
+    {
+        var structure = new TinyValidationStructure(
+            typeof(CreateTeam),
+            typeof(CreateTeamValidation),
+            Array.Empty<TinyValidationRuleStructure>(),
+            new[] { typeof(ReservedTeamNameRule) });
+        var customRules = Assert.IsAssignableFrom<IList<string>>(structure.CustomRuleIdentities);
+
+        Assert.Throws<NotSupportedException>(
+            () => customRules[0] = typeof(RuntimeTests).FullName!);
+        Assert.Equal(
+            typeof(ReservedTeamNameRule).FullName,
+            Assert.Single(structure.CustomRuleIdentities));
+    }
+
+    [Fact]
     public void Bootstrap_structure_snapshot_is_deterministically_ordered()
     {
         var snapshot = TinyValidationBootstrap.GetValidations();
@@ -215,6 +246,48 @@ public sealed class RuntimeTests
             .ToArray();
 
         Assert.Equal(expected, snapshot);
+    }
+
+    [Fact]
+    public void Bootstrap_returns_a_new_structure_snapshot_for_each_read()
+    {
+        var first = TinyValidationBootstrap.GetValidations();
+        var second = TinyValidationBootstrap.GetValidations();
+
+        Assert.NotSame(first, second);
+        Assert.Equal(first, second);
+    }
+
+    [Fact]
+    public void Generated_validation_structure_is_materialized_once()
+    {
+        var firstSnapshot = TinyValidationBootstrap.GetValidations();
+        var secondSnapshot = TinyValidationBootstrap.GetValidations();
+
+        var first = Assert.Single(
+            firstSnapshot,
+            candidate => candidate.ValidatedTypeIdentity == typeof(CreateProfile).FullName);
+        var second = Assert.Single(
+            secondSnapshot,
+            candidate => candidate.ValidatedTypeIdentity == typeof(CreateProfile).FullName);
+
+        Assert.Same(first, second);
+    }
+
+    [Fact]
+    public void Validation_structure_is_collected_lazily_and_only_once()
+    {
+        var contribution = new LazyStructureTestContribution();
+
+        TinyValidationBootstrap.AddContribution(contribution);
+
+        var readsBeforeCollection = contribution.StructureReads;
+
+        TinyValidationBootstrap.GetValidations();
+        TinyValidationBootstrap.GetValidations();
+
+        Assert.Equal(0, readsBeforeCollection);
+        Assert.Equal(1, contribution.StructureReads);
     }
 
     private static ITinyValidator BuildValidator()
@@ -266,5 +339,33 @@ public sealed class DuplicateTestContribution : ITinyValidationContribution
     public void Register(IServiceCollection services)
     {
         services.AddSingleton<DuplicateContributionMarker>();
+    }
+}
+
+public sealed class LazyStructureTestContribution :
+    ITinyValidationContribution,
+    ITinyValidationStructureContribution
+{
+    public int StructureReads { get; private set; }
+
+    public IReadOnlyList<TinyValidationStructure> Validations
+    {
+        get
+        {
+            StructureReads++;
+
+            return new[]
+            {
+                new TinyValidationStructure(
+                    typeof(CommandWithoutValidation),
+                    typeof(RuntimeTests),
+                    Array.Empty<TinyValidationRuleStructure>(),
+                    Array.Empty<Type>())
+            };
+        }
+    }
+
+    public void Register(IServiceCollection services)
+    {
     }
 }
