@@ -54,6 +54,41 @@ public static class TinyValidationBootstrap
         }
     }
 
+    public static IReadOnlyList<TinyValidationStructure> GetValidations()
+    {
+        var validations = new List<TinyValidationStructure>();
+        ITinyValidationContribution[] snapshot;
+
+        lock (SyncRoot)
+        {
+            snapshot = Contributions.ToArray();
+        }
+
+        foreach (var contribution in snapshot)
+        {
+            if (contribution is ITinyValidationStructureContribution structureContribution)
+            {
+                validations.AddRange(structureContribution.Validations);
+            }
+        }
+
+        validations.Sort(CompareValidations);
+        return validations.ToArray();
+    }
+
+    private static int CompareValidations(
+        TinyValidationStructure left,
+        TinyValidationStructure right)
+    {
+        var validatedTypeComparison = string.CompareOrdinal(
+            left.ValidatedTypeIdentity,
+            right.ValidatedTypeIdentity);
+
+        return validatedTypeComparison != 0
+            ? validatedTypeComparison
+            : string.CompareOrdinal(left.DeclarationIdentity, right.DeclarationIdentity);
+    }
+
     private static bool HasContribution(ITinyValidationContribution contribution)
     {
         foreach (var registered in Contributions)

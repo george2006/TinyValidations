@@ -167,6 +167,56 @@ public sealed class RuntimeTests
         Assert.Equal(1, count);
     }
 
+    [Fact]
+    public void Bootstrap_exposes_generated_structure_without_running_validation()
+    {
+        var snapshot = TinyValidationBootstrap.GetValidations();
+
+        var validation = Assert.Single(
+            snapshot,
+            candidate => candidate.ValidatedTypeIdentity == typeof(CreateProfile).FullName);
+        Assert.Equal(typeof(CreateProfileValidation).FullName, validation.DeclarationIdentity);
+        Assert.Contains(validation.Rules, rule => rule.MemberPath == "Age" && rule.Kind == "AtLeast");
+
+        var customValidation = Assert.Single(
+            snapshot,
+            candidate => candidate.ValidatedTypeIdentity == typeof(CreateTeam).FullName);
+        Assert.Contains(typeof(ReservedTeamNameRule).FullName, customValidation.CustomRuleIdentities);
+
+        Assert.NotSame(snapshot, TinyValidationBootstrap.GetValidations());
+    }
+
+    [Fact]
+    public void Validation_structure_copies_rule_and_custom_rule_inputs()
+    {
+        var rules = new[] { new TinyValidationRuleStructure("Name", "Required") };
+        var customRules = new[] { typeof(ReservedTeamNameRule) };
+        var structure = new TinyValidationStructure(
+            typeof(CreateTeam),
+            typeof(CreateTeamValidation),
+            rules,
+            customRules);
+
+        rules[0] = new TinyValidationRuleStructure("Changed", "Email");
+        customRules[0] = typeof(RuntimeTests);
+
+        var rule = Assert.Single(structure.Rules);
+        Assert.Equal("Name", rule.MemberPath);
+        Assert.Equal(typeof(ReservedTeamNameRule).FullName, Assert.Single(structure.CustomRuleIdentities));
+    }
+
+    [Fact]
+    public void Bootstrap_structure_snapshot_is_deterministically_ordered()
+    {
+        var snapshot = TinyValidationBootstrap.GetValidations();
+        var expected = snapshot
+            .OrderBy(validation => validation.ValidatedTypeIdentity, StringComparer.Ordinal)
+            .ThenBy(validation => validation.DeclarationIdentity, StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Equal(expected, snapshot);
+    }
+
     private static ITinyValidator BuildValidator()
     {
         var services = new ServiceCollection();
