@@ -17,8 +17,8 @@ The next TinyValidations beta includes two related contracts:
 - the generated validation structure exposes the typed metadata required by provider adapters;
 - `Required<TValue>` generates valid behavior for every accepted member type, including `Guid`.
 
-Both contracts are implemented and covered by compilation and runtime behavior tests. Before the
-beta is published, validate them together through a clean package consumer using the packed NuGet.
+Both contracts are implemented and covered by compilation and runtime behavior tests. They have
+also been validated together through a clean package consumer using the packed NuGet.
 
 ## TinyDispatcher
 
