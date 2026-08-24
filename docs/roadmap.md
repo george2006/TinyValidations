@@ -10,6 +10,19 @@ This roadmap describes the expected direction, not a compatibility promise.
 - Keep the stable core small while integrations evolve separately.
 - Improve documentation where real usage exposes unclear edges.
 
+## Next Beta Gate
+
+Do not publish the next TinyValidations beta until both contracts are reviewed together:
+
+- the generated validation structure exposes the typed metadata required by provider adapters;
+- `Required<TValue>` generates valid behavior for every accepted member type, including `Guid`.
+
+`Required<TValue>` currently accepts `Guid`, but the generated null and string pattern checks do
+not compile for a non-nullable value type. The fix must define and test absence consistently for
+reference types, strings, nullable value types, `Guid.Empty`, default primitive and enum values,
+and user-defined structs. A text-only generator assertion is insufficient; regression coverage
+must compile and execute representative generated validators.
+
 ## TinyDispatcher
 
 - Add a TinyDispatcher integration package.
