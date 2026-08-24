@@ -24,6 +24,8 @@ Intermediate null values are handled as missing nested values.
 ## Required
 
 Requires the value to be present. For strings, whitespace is treated as missing.
+For non-nullable value types, the default value is treated as missing. Nullable value types are
+missing only when they are `null`; an underlying default value such as `(int?)0` is present.
 
 ```csharp
 rules.Required(x => x.Email);
