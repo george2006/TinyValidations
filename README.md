@@ -107,6 +107,9 @@ The `Define` method is declaration-only. TinyValidations reads it at compile tim
 
 Supported built-in rules are documented in [Rules](docs/rules.md).
 
+`Required` treats `null`, whitespace strings, and default non-nullable value types such as
+`Guid.Empty` as missing. A nullable value type is missing only when it is `null`.
+
 ## Custom rules
 
 Custom rules implement `IAsyncValidationRule<T>`. They are resolved from dependency injection, so they can use scoped services.
