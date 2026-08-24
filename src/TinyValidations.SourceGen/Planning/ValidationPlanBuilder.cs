@@ -17,6 +17,7 @@ namespace TinyValidations.SourceGen.Planning
 
                 runners.Add(new GeneratedRunnerPlan(
                     SafeName.Create(validation.ValidationTypeName) + "Runner",
+                    validation.ValidationTypeName,
                     validation.CommandTypeName,
                     rules,
                     customRules));

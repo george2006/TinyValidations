@@ -47,9 +47,59 @@ public sealed class CreateUser
         Assert.Contains("ServiceDescriptor.Scoped", text);
         Assert.Contains("TryAddEnumerable", text);
         Assert.Contains("TryAddScoped<global::UniqueEmailRule>", text);
+        Assert.Contains("ITinyValidationStructureContribution", text);
+        Assert.Contains("typeof(global::CreateUser), typeof(global::CreateUserValidation)", text);
+        Assert.Contains("TinyValidationRuleStructure(\"Email\", \"Required\")", text);
+        Assert.Contains("TinyValidationRuleStructure(\"Email\", \"Email\")", text);
+        Assert.Contains("TinyValidationRuleStructure(\"Age\", \"AtLeast\")", text);
+        Assert.Contains("new global::System.Type[] { typeof(global::UniqueEmailRule) }", text);
+        var structureLine = Assert.Single(
+            text.Split('\n'),
+            line => line.Contains("new global::TinyValidations.TinyValidationStructure("));
+        Assert.DoesNotContain("Runner", structureLine);
+        Assert.DoesNotContain("18", structureLine);
+        Assert.DoesNotContain("is required", structureLine);
         Assert.DoesNotContain("System.Reflection", text);
         Assert.DoesNotContain("GetType()", text);
         Assert.DoesNotContain("typeof(T)", text);
+    }
+
+    [Fact]
+    public void Generates_a_structure_entry_for_each_validation_declaration()
+    {
+        var source = """
+using TinyValidations;
+
+public sealed class CreateOrderValidation : IValidation<CreateOrder>
+{
+    public void Define(ValidationRules<CreateOrder> rules)
+    {
+        rules.Required(x => x.Number);
+    }
+}
+
+public sealed class CancelOrderValidation : IValidation<CancelOrder>
+{
+    public void Define(ValidationRules<CancelOrder> rules)
+    {
+        rules.HasText(x => x.Reason);
+    }
+}
+
+public sealed record CreateOrder(string Number);
+public sealed record CancelOrder(string Reason);
+""";
+
+        var result = SourceGeneratorTestHost.Run(source);
+        var text = result.SingleGeneratedSource();
+        var structureLines = text.Split('\n')
+            .Where(line => line.Contains("new global::TinyValidations.TinyValidationStructure("))
+            .ToArray();
+
+        result.ShouldHaveNoCompilationErrors();
+        Assert.Equal(2, structureLines.Length);
+        Assert.Contains(structureLines, line => line.Contains("typeof(global::CreateOrderValidation)"));
+        Assert.Contains(structureLines, line => line.Contains("typeof(global::CancelOrderValidation)"));
     }
 
     [Fact]
