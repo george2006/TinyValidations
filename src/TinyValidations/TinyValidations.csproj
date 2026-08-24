@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <PackageId>TinyValidations</PackageId>
-    <Version>1.1.0-beta.1</Version>
+    <Version>1.1.0-beta.2</Version>
     <Authors>Jorge Durban Antunano</Authors>
     <Description>Small compile-time validation for application-layer commands, with generated runners, DI-friendly custom rules, and pipeline-friendly validation primitives.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -10,7 +10,7 @@
     <RepositoryUrl>https://github.com/george2006/TinyValidations</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>validation;source-generator;dotnet;dependency-injection;aspnetcore;mediatr;tinydispatcher;opentelemetry;observability</PackageTags>
-    <PackageReleaseNotes>TinyValidations 1.1.0-beta.1 adds built-in Activity enrichment for completed validation results. It records aggregate validation outcome and failure count on the current Activity without creating spans, adding an OpenTelemetry package dependency, emitting validation details, or changing the owning operation outcome.</PackageReleaseNotes>
+    <PackageReleaseNotes>TinyValidations 1.1.0-beta.2 adds typed, lazily collected validation structure for tooling and adapters. It also makes Required generate valid behavior for reference, nullable, and non-nullable value types, treating default non-nullable values such as Guid.Empty as missing.</PackageReleaseNotes>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

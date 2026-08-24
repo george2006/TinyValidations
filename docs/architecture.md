@@ -82,6 +82,10 @@ Generated contributions register runners and custom rules with Microsoft depende
 
 Generated contributions are added to the runtime bootstrap through module initializers. The bootstrap keeps a process-wide contribution list, but applies contributions only once per `IServiceCollection`.
 
+Generated contributions also expose typed validation structure. `TinyValidationBootstrap.GetValidations()`
+collects this structure lazily from loaded contributions so tooling can inspect validated types,
+declarations, built-in rules, and custom rule types without executing validation behavior.
+
 ## Runtime Execution
 
 `ITinyValidator` resolves all generated runners for the command type and asks each runner to validate the command.

@@ -6,13 +6,14 @@ It was built for TinyDispatcher-style applications first: define a command, defi
 
 > Status: 1.0 stable. The core package is intentionally small and host-agnostic. Native host integrations may ship separately.
 
-> Preview: 1.1.0-beta.1 adds aggregate validation result enrichment to the current `Activity` without creating spans or adding an OpenTelemetry package dependency.
+> Preview: 1.1.0-beta.2 adds typed validation structure for tooling and fixes `Required` for non-nullable value types.
 
 ## Contents
 
 - [Why TinyValidations?](#why-tinyvalidations)
 - [Quick start](#quick-start)
 - [Validation declarations](#validation-declarations)
+- [Inspect generated validations](#inspect-generated-validations)
 - [Custom rules](#custom-rules)
 - [TinyDispatcher](#tinydispatcher)
 - [Tiny suite](#tiny-suite)
@@ -109,6 +110,35 @@ Supported built-in rules are documented in [Rules](docs/rules.md).
 
 `Required` treats `null`, whitespace strings, and default non-nullable value types such as
 `Guid.Empty` as missing. A nullable value type is missing only when it is `null`.
+
+## Inspect generated validations
+
+Tooling and adapters can retrieve the generated validation structure without executing validation
+rules or scanning assemblies:
+
+```csharp
+var validations = TinyValidationBootstrap.GetValidations();
+
+foreach (var validation in validations)
+{
+    Console.WriteLine(validation.ValidatedType.FullName);
+    Console.WriteLine(validation.DeclarationType.FullName);
+
+    foreach (var rule in validation.Rules)
+    {
+        Console.WriteLine($"{rule.MemberPath}: {rule.Kind}");
+    }
+
+    foreach (var customRuleType in validation.CustomRuleTypes)
+    {
+        Console.WriteLine(customRuleType.FullName);
+    }
+}
+```
+
+The structure is collected lazily on the first call and then reused. It contains contributions
+from TinyValidations-enabled assemblies loaded by the application. Calling `GetValidations()` does
+not resolve services, construct validators, or run business rules.
 
 ## Custom rules
 

@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.0-beta.2 - 2026-08-24
+
+### Added
+- Typed validation structure for tooling and provider adapters through `TinyValidationBootstrap.GetValidations()`.
+- Validated and declaration `Type` values alongside stable string identities.
+- Typed custom-rule metadata for each generated validation declaration.
+
+### Fixed
+- `Required<TValue>` now generates compilable behavior for reference, nullable, and non-nullable value types.
+- Default non-nullable values such as `Guid.Empty`, numeric zero, `false`, zero-valued enums, and default structs are treated as missing.
+
+### Notes
+- Validation structure is collected lazily only when requested.
+- Structure inspection does not resolve services, construct validators, or execute validation rules.
+- Nullable value types are missing only when `null`; an underlying default value such as `(int?)0` is present.
+
 ## 1.1.0-beta.1 - 2026-08-20
 
 ### Added
