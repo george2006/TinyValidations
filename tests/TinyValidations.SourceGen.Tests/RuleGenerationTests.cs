@@ -64,9 +64,9 @@ public sealed class RuleCoverageCommand
 
         result.ShouldHaveNoDiagnostics();
         result.ShouldHaveNoCompilationErrors();
-        Assert.Contains("if (instance.Required is null)", text);
-        Assert.Contains("else if (instance.Required is string __text)", text);
-        Assert.Contains("if (string.IsNullOrWhiteSpace(__text))", text);
+        Assert.Contains(
+            "if (global::TinyValidations.TinyRequiredValue.IsMissing(instance.Required))",
+            text);
         Assert.Contains("errors.Add(\"Required\", \"Required is required.\");", text);
         Assert.Contains("if (string.IsNullOrWhiteSpace(instance.Text))", text);
         Assert.Contains("errors.Add(\"Text\", \"Text must contain text.\");", text);

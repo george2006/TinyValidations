@@ -22,6 +22,100 @@ public sealed class RuleBehaviorTests
     }
 
     [Fact]
+    public async Task Required_uses_null_presence_for_references_regardless_of_custom_equality()
+    {
+        var validator = BuildValidator();
+
+        var value = new RequiredReferenceValue();
+        var nullResult = await validator.ValidateAsync(new RequiredReferenceRuleCommand(null));
+        var valueResult = await validator.ValidateAsync(new RequiredReferenceRuleCommand(value));
+
+        AssertHasError(nullResult, nameof(RequiredReferenceRuleCommand.Value), "Value is required.");
+        AssertValid(valueResult);
+    }
+
+    [Fact]
+    public async Task Required_rejects_default_non_nullable_values()
+    {
+        var validator = BuildValidator();
+
+        var identifierResult = await validator.ValidateAsync(new RequiredValueRuleCommand(
+            Guid.Empty,
+            1,
+            true,
+            RequiredValueStatus.Active,
+            new RequiredValue(1)));
+        var numberResult = await validator.ValidateAsync(new RequiredValueRuleCommand(
+            Guid.NewGuid(),
+            0,
+            true,
+            RequiredValueStatus.Active,
+            new RequiredValue(1)));
+        var booleanResult = await validator.ValidateAsync(new RequiredValueRuleCommand(
+            Guid.NewGuid(),
+            1,
+            false,
+            RequiredValueStatus.Active,
+            new RequiredValue(1)));
+        var enumResult = await validator.ValidateAsync(new RequiredValueRuleCommand(
+            Guid.NewGuid(),
+            1,
+            true,
+            RequiredValueStatus.Unknown,
+            new RequiredValue(1)));
+        var structureResult = await validator.ValidateAsync(new RequiredValueRuleCommand(
+            Guid.NewGuid(),
+            1,
+            true,
+            RequiredValueStatus.Active,
+            default));
+
+        AssertHasError(identifierResult, nameof(RequiredValueRuleCommand.Identifier), "Identifier is required.");
+        AssertHasError(numberResult, nameof(RequiredValueRuleCommand.Number), "Number is required.");
+        AssertHasError(booleanResult, nameof(RequiredValueRuleCommand.Enabled), "Enabled is required.");
+        AssertHasError(enumResult, nameof(RequiredValueRuleCommand.Status), "Status is required.");
+        AssertHasError(structureResult, nameof(RequiredValueRuleCommand.Structure), "Structure is required.");
+    }
+
+    [Fact]
+    public async Task Required_accepts_non_default_non_nullable_values()
+    {
+        var validator = BuildValidator();
+        var command = new RequiredValueRuleCommand(
+            Guid.NewGuid(),
+            1,
+            true,
+            RequiredValueStatus.Active,
+            new RequiredValue(1));
+
+        var result = await validator.ValidateAsync(command);
+
+        AssertValid(result);
+    }
+
+    [Fact]
+    public async Task Required_rejects_null_nullable_values_but_accepts_the_underlying_default()
+    {
+        var validator = BuildValidator();
+
+        var nullResult = await validator.ValidateAsync(new RequiredNullableValueRuleCommand(null));
+        var zeroResult = await validator.ValidateAsync(new RequiredNullableValueRuleCommand(0));
+
+        AssertHasError(nullResult, nameof(RequiredNullableValueRuleCommand.Number), "Number is required.");
+        AssertValid(zeroResult);
+    }
+
+    [Fact]
+    public async Task Required_accepts_empty_collections()
+    {
+        var validator = BuildValidator();
+
+        var result = await validator.ValidateAsync(new RequiredCollectionRuleCommand(Array.Empty<string>()));
+
+        AssertValid(result);
+    }
+
+    [Fact]
     public async Task HasText_rejects_null_empty_and_whitespace_text()
     {
         var validator = BuildValidator();
@@ -269,6 +363,76 @@ public sealed class RequiredRuleCommandValidation : IValidation<RequiredRuleComm
     public void Define(ValidationRules<RequiredRuleCommand> rules)
     {
         rules.Required(x => x.Value);
+    }
+}
+
+public sealed record RequiredReferenceRuleCommand(RequiredReferenceValue? Value);
+
+public sealed class RequiredReferenceValue
+{
+    public override bool Equals(object? obj)
+    {
+        return true;
+    }
+
+    public override int GetHashCode()
+    {
+        return 0;
+    }
+}
+
+public sealed class RequiredReferenceRuleCommandValidation : IValidation<RequiredReferenceRuleCommand>
+{
+    public void Define(ValidationRules<RequiredReferenceRuleCommand> rules)
+    {
+        rules.Required(x => x.Value);
+    }
+}
+
+public sealed record RequiredValueRuleCommand(
+    Guid Identifier,
+    int Number,
+    bool Enabled,
+    RequiredValueStatus Status,
+    RequiredValue Structure);
+
+public enum RequiredValueStatus
+{
+    Unknown,
+    Active
+}
+
+public readonly record struct RequiredValue(int Number);
+
+public sealed class RequiredValueRuleCommandValidation : IValidation<RequiredValueRuleCommand>
+{
+    public void Define(ValidationRules<RequiredValueRuleCommand> rules)
+    {
+        rules.Required(x => x.Identifier);
+        rules.Required(x => x.Number);
+        rules.Required(x => x.Enabled);
+        rules.Required(x => x.Status);
+        rules.Required(x => x.Structure);
+    }
+}
+
+public sealed record RequiredNullableValueRuleCommand(int? Number);
+
+public sealed class RequiredNullableValueRuleCommandValidation : IValidation<RequiredNullableValueRuleCommand>
+{
+    public void Define(ValidationRules<RequiredNullableValueRuleCommand> rules)
+    {
+        rules.Required(x => x.Number);
+    }
+}
+
+public sealed record RequiredCollectionRuleCommand(IReadOnlyCollection<string> Values);
+
+public sealed class RequiredCollectionRuleCommandValidation : IValidation<RequiredCollectionRuleCommand>
+{
+    public void Define(ValidationRules<RequiredCollectionRuleCommand> rules)
+    {
+        rules.Required(x => x.Values);
     }
 }
 
