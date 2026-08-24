@@ -12,6 +12,16 @@ public sealed class TinyValidationStructure
         IEnumerable<TinyValidationRuleStructure> rules,
         IEnumerable<Type> customRuleTypes)
     {
+        if (validatedType is null)
+        {
+            throw new ArgumentNullException(nameof(validatedType));
+        }
+
+        if (declarationType is null)
+        {
+            throw new ArgumentNullException(nameof(declarationType));
+        }
+
         if (rules is null)
         {
             throw new ArgumentNullException(nameof(rules));
@@ -22,14 +32,27 @@ public sealed class TinyValidationStructure
             throw new ArgumentNullException(nameof(customRuleTypes));
         }
 
-        ValidatedTypeIdentity = GetIdentity(validatedType, nameof(validatedType));
-        DeclarationIdentity = GetIdentity(declarationType, nameof(declarationType));
+        var copiedCustomRuleTypes = customRuleTypes
+            .Select(type => type ?? throw new ArgumentException(
+                "Custom rule types cannot contain null values.",
+                nameof(customRuleTypes)))
+            .ToArray();
+
+        ValidatedType = validatedType;
+        DeclarationType = declarationType;
         Rules = Array.AsReadOnly(rules.ToArray());
+        CustomRuleTypes = Array.AsReadOnly(copiedCustomRuleTypes);
+        ValidatedTypeIdentity = GetIdentity(ValidatedType);
+        DeclarationIdentity = GetIdentity(DeclarationType);
         CustomRuleIdentities = Array.AsReadOnly(
-            customRuleTypes
-                .Select(type => GetIdentity(type, nameof(customRuleTypes)))
+            copiedCustomRuleTypes
+                .Select(GetIdentity)
                 .ToArray());
     }
+
+    public Type ValidatedType { get; }
+
+    public Type DeclarationType { get; }
 
     public string ValidatedTypeIdentity { get; }
 
@@ -39,15 +62,12 @@ public sealed class TinyValidationStructure
 
     public int BuiltInRuleCount => Rules.Count;
 
+    public IReadOnlyList<Type> CustomRuleTypes { get; }
+
     public IReadOnlyList<string> CustomRuleIdentities { get; }
 
-    private static string GetIdentity(Type? type, string parameterName)
+    private static string GetIdentity(Type type)
     {
-        if (type is null)
-        {
-            throw new ArgumentNullException(parameterName);
-        }
-
         return type.FullName ?? type.Name;
     }
 }

@@ -200,7 +200,27 @@ public sealed class RuntimeTests
 
         var rule = Assert.Single(structure.Rules);
         Assert.Equal("Name", rule.MemberPath);
+        Assert.Equal(typeof(ReservedTeamNameRule), Assert.Single(structure.CustomRuleTypes));
         Assert.Equal(typeof(ReservedTeamNameRule).FullName, Assert.Single(structure.CustomRuleIdentities));
+    }
+
+    [Fact]
+    public void Validation_structure_exposes_types_and_compatible_identities()
+    {
+        var structure = new TinyValidationStructure(
+            typeof(CreateTeam),
+            typeof(CreateTeamValidation),
+            Array.Empty<TinyValidationRuleStructure>(),
+            new[] { typeof(ReservedTeamNameRule) });
+
+        Assert.Equal(typeof(CreateTeam), structure.ValidatedType);
+        Assert.Equal(typeof(CreateTeamValidation), structure.DeclarationType);
+        Assert.Equal(typeof(ReservedTeamNameRule), Assert.Single(structure.CustomRuleTypes));
+        Assert.Equal(typeof(CreateTeam).FullName, structure.ValidatedTypeIdentity);
+        Assert.Equal(typeof(CreateTeamValidation).FullName, structure.DeclarationIdentity);
+        Assert.Equal(
+            typeof(ReservedTeamNameRule).FullName,
+            Assert.Single(structure.CustomRuleIdentities));
     }
 
     [Fact]
@@ -234,6 +254,23 @@ public sealed class RuntimeTests
         Assert.Equal(
             typeof(ReservedTeamNameRule).FullName,
             Assert.Single(structure.CustomRuleIdentities));
+    }
+
+    [Fact]
+    public void Validation_structure_custom_rule_types_cannot_be_modified()
+    {
+        var structure = new TinyValidationStructure(
+            typeof(CreateTeam),
+            typeof(CreateTeamValidation),
+            Array.Empty<TinyValidationRuleStructure>(),
+            new[] { typeof(ReservedTeamNameRule) });
+        var customRules = Assert.IsAssignableFrom<IList<Type>>(structure.CustomRuleTypes);
+
+        Assert.Throws<NotSupportedException>(
+            () => customRules[0] = typeof(RuntimeTests));
+        Assert.Equal(
+            typeof(ReservedTeamNameRule),
+            Assert.Single(structure.CustomRuleTypes));
     }
 
     [Fact]
