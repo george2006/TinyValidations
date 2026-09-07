@@ -1,5 +1,7 @@
 # TinyValidations
 
+[Support the Tiny suite on Buy Me a Coffee](https://buymeacoffee.com/durbich) to help fund testing and ongoing maintenance.
+
 TinyValidations is a small compile-time validation library for application-layer commands.
 
 It was built for TinyDispatcher-style applications first: define a command, define its validation, register services, and let generated code do the boring work before the handler runs. Native ASP.NET integration is planned, but the core package is intentionally host-agnostic.
