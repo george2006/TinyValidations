@@ -5,7 +5,7 @@ namespace TinyValidations.SourceGen.Tests;
 public sealed class DiagnosticTests
 {
     [Fact]
-    public void Reports_diagnostic_when_validation_has_no_supported_rules()
+    public void Reports_error_when_validation_has_no_supported_rules()
     {
         var source = """
 using TinyValidations;
@@ -29,7 +29,7 @@ public sealed class CreateUser
     }
 
     [Fact]
-    public void Reports_diagnostic_when_define_signature_is_wrong()
+    public void Reports_error_when_define_signature_is_wrong()
     {
         var source = """
 using TinyValidations;
@@ -58,7 +58,7 @@ public sealed class CreateUser
     }
 
     [Fact]
-    public void Reports_diagnostic_when_define_parameter_type_is_wrong()
+    public void Reports_error_when_define_parameter_type_is_wrong()
     {
         var source = """
 using TinyValidations;
@@ -81,7 +81,7 @@ public sealed class CreateUser
     }
 
     [Fact]
-    public void Reports_diagnostic_when_define_return_type_is_wrong()
+    public void Reports_error_when_define_return_type_is_wrong()
     {
         var source = """
 using TinyValidations;
@@ -105,7 +105,7 @@ public sealed class CreateUser
     }
 
     [Fact]
-    public void Reports_diagnostic_when_rule_call_is_unsupported()
+    public void Reports_error_when_rule_call_is_unsupported()
     {
         var source = """
 using TinyValidations;
@@ -130,7 +130,7 @@ public sealed class CreateUser
     }
 
     [Fact]
-    public void Reports_diagnostic_when_selector_is_unsupported()
+    public void Reports_error_when_selector_is_unsupported()
     {
         var source = """
 using TinyValidations;
@@ -155,7 +155,7 @@ public sealed class CreateUser
     }
 
     [Fact]
-    public void Reports_diagnostic_when_argument_is_not_literal()
+    public void Reports_error_when_argument_is_not_literal()
     {
         var source = """
 using TinyValidations;
@@ -181,7 +181,7 @@ public sealed class CreateUser
     }
 
     [Fact]
-    public void Reports_diagnostic_when_rule_value_argument_is_missing()
+    public void Reports_error_when_rule_value_argument_is_missing()
     {
         var source = """
 using TinyValidations;
@@ -206,7 +206,7 @@ public sealed class CreateUser
     }
 
     [Fact]
-    public void Reports_diagnostic_when_rule_has_too_many_arguments()
+    public void Reports_error_when_rule_has_too_many_arguments()
     {
         var source = """
 using TinyValidations;
@@ -231,7 +231,7 @@ public sealed class CreateUser
     }
 
     [Fact]
-    public void Reports_diagnostic_when_message_is_not_literal()
+    public void Reports_error_when_message_is_not_literal()
     {
         var source = """
 using TinyValidations;
@@ -257,7 +257,7 @@ public sealed class CreateUser
     }
 
     [Fact]
-    public void Reports_diagnostic_when_matches_pattern_is_invalid()
+    public void Reports_error_when_matches_pattern_is_invalid()
     {
         var source = """
 using TinyValidations;
@@ -282,7 +282,7 @@ public sealed class CreateUser
     }
 
     [Fact]
-    public void Reports_diagnostic_when_requires_method_is_not_static()
+    public void Reports_error_when_requires_method_is_not_static()
     {
         var source = """
 using TinyValidations;
@@ -316,7 +316,7 @@ public sealed class CreateOrder
     }
 
     [Fact]
-    public void Reports_diagnostic_when_requires_method_does_not_return_bool()
+    public void Reports_error_when_requires_method_does_not_return_bool()
     {
         var source = """
 using TinyValidations;
@@ -349,7 +349,7 @@ public sealed class CreateOrder
     }
 
     [Fact]
-    public void Reports_diagnostic_when_requires_method_has_wrong_parameter_count()
+    public void Reports_error_when_requires_method_has_wrong_parameter_count()
     {
         var source = """
 using TinyValidations;
@@ -382,7 +382,7 @@ public sealed class CreateOrder
     }
 
     [Fact]
-    public void Reports_diagnostic_when_requires_rule_has_too_many_arguments()
+    public void Reports_error_when_requires_rule_has_too_many_arguments()
     {
         var source = """
 using TinyValidations;
@@ -415,7 +415,7 @@ public sealed class CreateOrder
     }
 
     [Fact]
-    public void Reports_diagnostic_when_custom_rule_type_is_invalid()
+    public void Reports_error_when_custom_rule_type_is_invalid()
     {
         var source = """
 using TinyValidations;
@@ -448,6 +448,7 @@ public sealed class CreateUser
         var diagnostic = result.SingleDiagnostic();
 
         result.ShouldGenerateNoSource();
+        Assert.Equal(Microsoft.CodeAnalysis.DiagnosticSeverity.Error, diagnostic.Severity);
 
         return diagnostic;
     }
