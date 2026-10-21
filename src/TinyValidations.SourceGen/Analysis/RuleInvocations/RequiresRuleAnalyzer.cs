@@ -7,6 +7,7 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
     internal sealed class RequiresRuleAnalyzer
     {
         private readonly MemberAccessAnalyzer _memberAccessAnalyzer = new MemberAccessAnalyzer();
+        private readonly RuleArgumentAnalyzer _argumentAnalyzer = new RuleArgumentAnalyzer();
 
         public RuleAnalysisResult Analyze(
             SemanticModel semanticModel,
@@ -36,23 +37,23 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                     requirementArgument.Expression.ToString());
             }
 
-            if (!IsSupportedMessage(messageArgument))
+            if (!IsSupportedMessage(semanticModel, messageArgument))
             {
                 return RuleAnalysisIssue.UnsupportedArgument(
                     messageArgument,
                     messageArgument.Expression.ToString());
             }
 
-            return CreateRule(member, requirementMethod, messageArgument);
+            var message = _argumentAnalyzer.GetMessage(semanticModel, messageArgument.Expression);
+
+            return CreateRule(member, requirementMethod, message);
         }
 
         private RuleAnalysisResult CreateRule(
             AnalyzedMemberAccess member,
             string requirementMethod,
-            ArgumentSyntax messageArgument)
+            string message)
         {
-            var message = messageArgument.Expression.ToString();
-
             return RuleAnalysisResult.ForRule(new RuleDefinition(
                 kind: RuleKind.Requires,
                 memberPath: member.Path,
@@ -74,14 +75,10 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             return invocation.ArgumentList.Arguments.Count == RuleShape.MinimumArgumentCount(RuleKind.Requires);
         }
 
-        private static bool IsSupportedMessage(ArgumentSyntax messageArgument)
+        private static bool IsSupportedMessage(SemanticModel semanticModel, ArgumentSyntax messageArgument)
         {
-            if (!(messageArgument.Expression is LiteralExpressionSyntax))
-            {
-                return false;
-            }
-
-            return true;
+            var constant = semanticModel.GetConstantValue(messageArgument.Expression);
+            return constant.HasValue;
         }
 
         private static bool IsSupportedRequirementMethod(

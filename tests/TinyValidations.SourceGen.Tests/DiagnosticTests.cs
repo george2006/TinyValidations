@@ -231,7 +231,7 @@ public sealed class CreateUser
     }
 
     [Fact]
-    public void Reports_error_when_message_is_not_literal()
+    public void Reports_error_when_message_is_not_a_compile_time_constant()
     {
         var source = """
 using TinyValidations;
