@@ -30,16 +30,19 @@ src/TinyValidations
   Execution
   Generation
   Rules
+  Telemetry
 ```
 
 ## Source Generator Project
 
 ```text
 src/TinyValidations.SourceGen
+  Discovery
   Analysis
     Declarations
     RuleInvocations
   Model
+  Validation
   Planning
   Emission
   Generation
@@ -48,8 +51,10 @@ src/TinyValidations.SourceGen
 ## Generation Flow
 
 ```text
-Analysis
+Discovery
+  -> Analysis
   -> Model
+  -> Validation
   -> Planning
   -> Emission
 ```
@@ -60,15 +65,36 @@ Analysis reads Roslyn syntax and symbols.
 
 It finds classes implementing `IValidation<T>` and reads calls made inside `Define`.
 
+Discovery first filters candidate class declarations. Analysis then uses Roslyn to bind each
+explicit argument to its parameter, including named and reordered arguments. Omitted optional
+messages remain absent so emission can supply the default message.
+
+Rule values, patterns, and messages are resolved as compile-time constants. Generated argument
+expressions preserve constant types and conversions. Display text is kept separately so default
+messages do not contain casts used by generated checks.
+
+Analysis collects issues per declaration and excludes a declaration with issues as a whole.
+It continues examining the remaining declarations.
+
 ## Model
 
 The model layer contains TinyValidations-owned data structures.
 
-Roslyn types should not leak past analysis.
+Symbols and operations stay in analysis. Rule definitions carry resolved type names and source
+expressions. Declaration locations and diagnostic descriptors are retained for reporting errors.
+
+## Validation
+
+Validation reports all collected analysis issues and diagnoses empty declarations. Diagnostics
+`TV0001` through `TV0006` have error severity.
+
+Only valid, non-empty definitions reach planning. An invalid declaration does not prevent source
+generation for unrelated valid declarations, but its errors still fail the consuming build.
+If no valid definitions remain, the generator emits no source.
 
 ## Planning
 
-Planning turns analyzed declarations into generated runner plans.
+Planning turns validated declarations into generated runner plans.
 
 This is where generated names and custom rule registration information are prepared.
 

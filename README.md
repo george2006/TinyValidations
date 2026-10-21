@@ -8,7 +8,7 @@ It was built for TinyDispatcher-style applications first: define a command, defi
 
 > Status: 1.0 stable. The core package is intentionally small and host-agnostic. Native host integrations may ship separately.
 
-> Preview: 1.1.0-beta.2 adds typed validation structure for tooling and fixes `Required` for non-nullable value types.
+> Preview: 1.1.0-beta.3 fixes validation generation safety and supports compile-time constants and named rule arguments. Generator diagnostics `TV0001` through `TV0006` are now errors. See the [changelog](CHANGELOG.md).
 
 ## Contents
 
@@ -109,6 +109,14 @@ public sealed class CreateUserValidation : IValidation<CreateUser>
 The `Define` method is declaration-only. TinyValidations reads it at compile time and emits generated validation runners.
 
 Supported built-in rules are documented in [Rules](docs/rules.md).
+
+Rule values, regex patterns, and supplied messages must be compile-time constants. Literals,
+`const` fields and locals, `nameof`, and constant expressions are supported. Named arguments can
+be reordered according to C# rules.
+
+Diagnostics `TV0001` through `TV0006` are compilation errors. The generator reports issues across
+declarations and generates the valid declarations independently, but the build fails until the
+errors are resolved. See [Declaration diagnostics](docs/rules.md#declaration-diagnostics).
 
 `Required` treats `null`, whitespace strings, and default non-nullable value types such as
 `Guid.Empty` as missing. A nullable value type is missing only when it is `null`.
@@ -246,8 +254,11 @@ TinyValidations is intentionally boring in the places that matter.
 
 TinyValidations is intentionally small.
 
-- Source generator diagnostics are intentionally focused.
-- Supported rule declaration shapes are intentionally narrow.
+- Declare rule calls directly inside `Define`; it is read at compile time and is not executed at runtime.
+- Selectors must be simple member paths. Put calculations and conditional checks in `Requires` or custom rules.
+- Rule values, patterns, and supplied messages must be compile-time constants. `static readonly` fields, ordinary variables, property reads, and runtime method calls are not supported as these arguments.
+- Comparison values must also satisfy the rule's `IComparable<T>` constraint. Runtime thresholds, including constructed dates and times, belong in `Requires` or custom rules.
+- Detected unsupported declarations produce errors `TV0001` through `TV0006`, even without treating warnings as errors.
 - Generated registration uses a bootstrap contribution mechanism that is idempotent per service collection.
 - Native ASP.NET integration is planned but not implemented yet.
 - Tests cover runtime behavior, generated behavior, diagnostics, and multi-assembly contributions.

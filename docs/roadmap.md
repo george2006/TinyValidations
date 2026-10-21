@@ -10,15 +10,12 @@ This roadmap describes the expected direction, not a compatibility promise.
 - Keep the stable core small while integrations evolve separately.
 - Improve documentation where real usage exposes unclear edges.
 
-## Next Beta Gate
+## Current Status
 
-The next TinyValidations beta includes two related contracts:
+Version `1.1.0-beta.3` adds generator error isolation, compilation errors for unsupported
+declarations, and support for constant and named rule arguments.
 
-- the generated validation structure exposes the typed metadata required by provider adapters;
-- `Required<TValue>` generates valid behavior for every accepted member type, including `Guid`.
-
-Both contracts are implemented and covered by compilation and runtime behavior tests. They have
-also been validated together through a clean package consumer using the packed NuGet.
+See the [changelog](../CHANGELOG.md) for release details.
 
 ## TinyDispatcher
 

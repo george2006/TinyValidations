@@ -82,9 +82,17 @@ if (!OrderNumberRequirements.HasOrderPrefix(instance.OrderNumber))
 
 - The member selector must be a simple member path, such as `x => x.OrderNumber` or `x => x.Profile.Email`.
 - The requirement must be a static method group.
+- The requirement method must not be generic.
 - The requirement must return `bool`.
 - The requirement must have exactly one parameter.
-- The message must be a string literal.
+- The message must be a compile-time constant string containing non-whitespace text. Literals, `const` fields and locals, `nameof`, and constant string expressions are supported.
+
+The requirement body is ordinary runtime code and may read values that cannot be used directly
+as built-in comparison arguments, such as dates or runtime thresholds. Lambda and delegate
+variable arguments are not supported in place of the static method group.
+
+Named arguments can be reordered. Unsupported requirement declarations report compilation
+errors; see [Argument forms and diagnostics](rules.md#argument-forms).
 
 ## Choosing The Extension Point
 

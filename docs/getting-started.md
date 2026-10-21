@@ -54,6 +54,16 @@ public sealed class CreateUserValidation : IValidation<CreateUser>
 }
 ```
 
+## Check Declarations
+
+The generator reads `Define` at compile time; it does not execute that method. Values and supplied
+messages in built-in rules must be compile-time constants. You can use `const` fields or locals
+instead of literals. See [Argument forms](rules.md#argument-forms).
+
+Unsupported declarations produce compilation errors `TV0001` through `TV0006`. The generator
+reports issues across declarations and continues generating valid declarations, but all errors
+must be resolved before the build succeeds.
+
 ## Run Validation
 
 ```csharp
