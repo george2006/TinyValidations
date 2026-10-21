@@ -86,7 +86,8 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             if (value is double doubleValue)
             {
                 var literal = SyntaxFactory.Literal(doubleValue);
-                return CreateFloatingPointArgument(doubleValue, literal.Text, "double");
+                var argument = literal.Text + "D";
+                return CreateFloatingPointArgument(doubleValue, argument, "double");
             }
 
             return Microsoft.CodeAnalysis.CSharp.SymbolDisplay.FormatPrimitive(
@@ -128,7 +129,42 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             var expression = invocation.ArgumentList.Arguments[argumentIndex].Expression;
             var constant = semanticModel.GetConstantValue(expression);
 
-            return CreateConstantArgument(constant.Value);
+            var argument = CreateConstantArgument(constant.Value);
+            var type = semanticModel.GetTypeInfo(expression).Type;
+            if (!RequiresExplicitType(type, constant.Value))
+            {
+                return argument;
+            }
+
+            var typeName = type!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            return "(" + typeName + ")(" + argument + ")";
+        }
+
+        private static bool RequiresExplicitType(ITypeSymbol? type, object? value)
+        {
+            if (type == null)
+            {
+                return false;
+            }
+
+            if (value == null)
+            {
+                return true;
+            }
+
+            switch (type.SpecialType)
+            {
+                case SpecialType.System_Boolean:
+                case SpecialType.System_Char:
+                case SpecialType.System_Int32:
+                case SpecialType.System_Single:
+                case SpecialType.System_Double:
+                case SpecialType.System_Decimal:
+                case SpecialType.System_String:
+                    return false;
+                default:
+                    return true;
+            }
         }
 
         private static bool HasArgument(InvocationExpressionSyntax invocation, int argumentIndex)

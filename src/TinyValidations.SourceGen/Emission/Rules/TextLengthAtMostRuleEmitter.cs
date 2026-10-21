@@ -9,7 +9,7 @@ namespace TinyValidations.SourceGen.Emission.Rules
 
         public void Emit(RuleDefinition rule, SourceWriter writer)
         {
-            var message = RuleMessage.For(rule, rule.MemberPath + " must contain at most " + rule.Argument + " characters.");
+            var message = RuleMessage.For(rule, rule.MemberPath + " must contain at most " + rule.ArgumentDisplay + " characters.");
             writer.WriteLine("if (" + rule.MemberAccess + " is not null)");
             writer.OpenBlock();
             writer.WriteLine("if (" + rule.MemberAccess + ".Length > " + rule.Argument + ")");

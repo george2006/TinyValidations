@@ -92,11 +92,16 @@ public sealed record CreateItem(string Text);
 
     [Theory]
     [InlineData("int", "-10", "-10")]
-    [InlineData("long", "long.MinValue", "-9223372036854775808")]
-    [InlineData("ulong", "ulong.MaxValue", "18446744073709551615")]
+    [InlineData("sbyte", "sbyte.MinValue", "(sbyte)(-128)")]
+    [InlineData("byte", "byte.MaxValue", "(byte)(255)")]
+    [InlineData("short", "short.MinValue", "(short)(-32768)")]
+    [InlineData("ushort", "ushort.MaxValue", "(ushort)(65535)")]
+    [InlineData("uint", "uint.MaxValue", "(uint)(4294967295)")]
+    [InlineData("long", "long.MinValue", "(long)(-9223372036854775808)")]
+    [InlineData("ulong", "ulong.MaxValue", "(ulong)(18446744073709551615)")]
     [InlineData("decimal", "1.234567890123456789m", "1.234567890123456789M")]
     [InlineData("float", "1.23456789f", "1.2345679F")]
-    [InlineData("double", "1.2345678901234567d", "1.2345678901234567")]
+    [InlineData("double", "1.2345678901234567d", "1.2345678901234567D")]
     [InlineData("float", "float.NaN", "float.NaN")]
     [InlineData("float", "float.PositiveInfinity", "float.PositiveInfinity")]
     [InlineData("float", "float.NegativeInfinity", "float.NegativeInfinity")]
@@ -105,7 +110,7 @@ public sealed record CreateItem(string Text);
     [InlineData("double", "double.NegativeInfinity", "double.NegativeInfinity")]
     [InlineData("string", "nameof(CreateItem)", "\"CreateItem\"")]
     [InlineData("string", "\"a\\n\\\"b\\\\c\"", "\"a\\n\\\"b\\\\c\"")]
-    [InlineData("string", "null", "null")]
+    [InlineData("string", "null", "(string)(null)")]
     [InlineData("char", "'M'", "'M'")]
     [InlineData("char", "'\\n'", "'\\n'")]
     [InlineData("bool", "true", "true")]
@@ -137,6 +142,43 @@ public sealed record CreateItem({{type}} Value);
 
         Assert.Contains(expectedCheck, text);
         Assert.DoesNotContain("Threshold", text);
+    }
+
+    [Theory]
+    [InlineData("TextLengthAtLeast", "sbyte", "at least")]
+    [InlineData("TextLengthAtLeast", "byte", "at least")]
+    [InlineData("TextLengthAtLeast", "short", "at least")]
+    [InlineData("TextLengthAtLeast", "ushort", "at least")]
+    [InlineData("TextLengthAtMost", "sbyte", "at most")]
+    [InlineData("TextLengthAtMost", "byte", "at most")]
+    [InlineData("TextLengthAtMost", "short", "at most")]
+    [InlineData("TextLengthAtMost", "ushort", "at most")]
+    public void Text_length_messages_show_the_value_without_its_generated_cast(string rule, string type, string comparison)
+    {
+        var source = $$"""
+using TinyValidations;
+
+public sealed class CreateItemValidation : IValidation<CreateItem>
+{
+    public void Define(ValidationRules<CreateItem> rules)
+    {
+        const {{type}} length = 10;
+        rules.{{rule}}(x => x.Text, length);
+    }
+}
+
+public sealed record CreateItem(string Text);
+""";
+
+        var result = SourceGeneratorTestHost.Run(source);
+        var expectedMessage = "Text must contain " + comparison + " 10 characters.";
+
+        result.ShouldHaveNoDiagnostics();
+        result.ShouldHaveNoCompilationErrors();
+
+        var text = result.SingleGeneratedSource();
+
+        Assert.Contains(expectedMessage, text);
     }
 
     [Theory]
