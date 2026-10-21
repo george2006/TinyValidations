@@ -54,6 +54,8 @@ internal sealed class SourceGeneratorRun
         _compilation = compilation;
     }
 
+    public IReadOnlyList<Diagnostic> Diagnostics => _result.Diagnostics;
+
     public Diagnostic SingleDiagnostic()
     {
         return Assert.Single(_result.Diagnostics);

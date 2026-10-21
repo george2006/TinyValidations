@@ -20,18 +20,14 @@ namespace TinyValidations.SourceGen.Generation
             System.Action<Diagnostic> reportDiagnostic)
         {
             var model = _analysis.Analyze(compilation, candidates);
-            var canGenerate = _validation.Validate(model, reportDiagnostic);
-            if (!canGenerate)
+            var validatedDefinitions = _validation.Validate(model, reportDiagnostic);
+
+            if (validatedDefinitions.Validations.Count == 0)
             {
                 return null;
             }
 
-            if (model.Validations.Count == 0)
-            {
-                return null;
-            }
-
-            var plan = _planning.Build(model);
+            var plan = _planning.Build(validatedDefinitions);
             return _emission.Emit(plan);
         }
     }

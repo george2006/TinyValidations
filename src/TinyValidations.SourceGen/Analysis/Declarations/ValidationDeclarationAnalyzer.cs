@@ -57,6 +57,7 @@ namespace TinyValidations.SourceGen.Analysis.Declarations
             var semanticModel = target.SemanticModel;
             var validationType = target.ValidationType;
             var commandType = target.CommandType;
+            var declarationIssues = new List<ValidationIssue>();
 
             var definition = AnalyzeDefineMethod(
                 semanticModel,
@@ -64,11 +65,18 @@ namespace TinyValidations.SourceGen.Analysis.Declarations
                 validationType,
                 commandType,
                 symbols.ValidationRules,
-                issues);
+                declarationIssues);
+
+            issues.AddRange(declarationIssues);
 
             if (definition == null)
             {
                 AddWrongDefineSignatureIssue(candidate, validationType, issues);
+                return;
+            }
+
+            if (declarationIssues.Count > 0)
+            {
                 return;
             }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using TinyValidations.SourceGen.Model;
 
@@ -6,35 +7,29 @@ namespace TinyValidations.SourceGen.Validation
 {
     internal sealed class ValidationDefinitionValidator
     {
-        public bool Validate(
+        public ValidationDefinitionSet Validate(
             ValidationDefinitionSet definitions,
             Action<Diagnostic> reportDiagnostic)
         {
-            var canGenerate = true;
-
             foreach (var issue in definitions.Issues)
             {
                 ReportIssue(issue, reportDiagnostic);
-                canGenerate = false;
             }
 
-            if (definitions.Issues.Count > 0)
-            {
-                return false;
-            }
+            var validDefinitions = new List<ValidationDefinition>();
 
             foreach (var definition in definitions.Validations)
             {
-                if (HasRules(definition))
+                if (!HasRules(definition))
                 {
+                    ReportEmptyValidation(definition, reportDiagnostic);
                     continue;
                 }
 
-                ReportEmptyValidation(definition, reportDiagnostic);
-                canGenerate = false;
+                validDefinitions.Add(definition);
             }
 
-            return canGenerate;
+            return new ValidationDefinitionSet(validDefinitions, definitions.Issues);
         }
 
         private static bool HasRules(ValidationDefinition definition)
