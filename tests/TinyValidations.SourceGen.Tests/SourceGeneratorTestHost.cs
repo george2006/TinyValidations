@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using TinyValidations.SourceGen;
@@ -54,6 +55,8 @@ internal sealed class SourceGeneratorRun
         _compilation = compilation;
     }
 
+    public IReadOnlyList<Diagnostic> Diagnostics => _result.Diagnostics;
+
     public Diagnostic SingleDiagnostic()
     {
         return Assert.Single(_result.Diagnostics);
@@ -81,5 +84,17 @@ internal sealed class SourceGeneratorRun
     public void ShouldGenerateNoSource()
     {
         Assert.Empty(_result.GeneratedTrees);
+    }
+
+    public Assembly LoadAssembly()
+    {
+        using var stream = new MemoryStream();
+        var result = _compilation.Emit(stream);
+        var diagnostics = string.Join(Environment.NewLine, result.Diagnostics);
+
+        Assert.True(result.Success, diagnostics);
+
+        var assemblyBytes = stream.ToArray();
+        return Assembly.Load(assemblyBytes);
     }
 }

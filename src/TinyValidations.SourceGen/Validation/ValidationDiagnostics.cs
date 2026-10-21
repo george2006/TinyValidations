@@ -9,7 +9,7 @@ namespace TinyValidations.SourceGen.Validation
             "Validation declaration has no usable Define method",
             "Validation declaration '{0}' must contain a Define method with one rules parameter",
             "TinyValidations",
-            DiagnosticSeverity.Warning,
+            DiagnosticSeverity.Error,
             true);
 
         public static readonly DiagnosticDescriptor UnsupportedRuleCall = new DiagnosticDescriptor(
@@ -17,7 +17,7 @@ namespace TinyValidations.SourceGen.Validation
             "Validation rule call is not supported",
             "Validation rule call '{0}' is not supported by TinyValidations",
             "TinyValidations",
-            DiagnosticSeverity.Warning,
+            DiagnosticSeverity.Error,
             true);
 
         public static readonly DiagnosticDescriptor UnsupportedSelector = new DiagnosticDescriptor(
@@ -25,7 +25,7 @@ namespace TinyValidations.SourceGen.Validation
             "Validation rule selector is not supported",
             "Validation rule selector '{0}' must be a simple member path",
             "TinyValidations",
-            DiagnosticSeverity.Warning,
+            DiagnosticSeverity.Error,
             true);
 
         public static readonly DiagnosticDescriptor UnsupportedArgument = new DiagnosticDescriptor(
@@ -33,7 +33,7 @@ namespace TinyValidations.SourceGen.Validation
             "Validation rule argument is not supported",
             "Validation rule argument '{0}' must be a constant value",
             "TinyValidations",
-            DiagnosticSeverity.Warning,
+            DiagnosticSeverity.Error,
             true);
 
         public static readonly DiagnosticDescriptor InvalidCustomRule = new DiagnosticDescriptor(
@@ -41,7 +41,7 @@ namespace TinyValidations.SourceGen.Validation
             "Custom validation rule type is invalid",
             "Custom validation rule '{0}' must implement IAsyncValidationRule<T>",
             "TinyValidations",
-            DiagnosticSeverity.Warning,
+            DiagnosticSeverity.Error,
             true);
 
         public static readonly DiagnosticDescriptor EmptyValidation = new DiagnosticDescriptor(
@@ -49,7 +49,7 @@ namespace TinyValidations.SourceGen.Validation
             "Validation declaration has no rules",
             "Validation declaration '{0}' does not contain validation rules",
             "TinyValidations",
-            DiagnosticSeverity.Warning,
+            DiagnosticSeverity.Error,
             true);
     }
 }

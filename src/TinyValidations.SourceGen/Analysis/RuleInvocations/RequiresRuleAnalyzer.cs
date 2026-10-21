@@ -7,6 +7,7 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
     internal sealed class RequiresRuleAnalyzer
     {
         private readonly MemberAccessAnalyzer _memberAccessAnalyzer = new MemberAccessAnalyzer();
+        private readonly RuleArgumentAnalyzer _argumentAnalyzer = new RuleArgumentAnalyzer();
 
         public RuleAnalysisResult Analyze(
             SemanticModel semanticModel,
@@ -17,9 +18,11 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                 return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
             }
 
-            var selectorArgument = invocation.ArgumentList.Arguments[0];
-            var requirementArgument = invocation.ArgumentList.Arguments[1];
-            var messageArgument = invocation.ArgumentList.Arguments[2];
+            var selectorArgument = _argumentAnalyzer.FindArgument(semanticModel, invocation, 0);
+            if (selectorArgument == null)
+            {
+                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
+            }
 
             var member = AnalyzeSelector(selectorArgument);
             if (member == null)
@@ -29,6 +32,12 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                     selectorArgument.Expression.ToString());
             }
 
+            var requirementArgument = _argumentAnalyzer.FindArgument(semanticModel, invocation, 1);
+            if (requirementArgument == null)
+            {
+                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
+            }
+
             if (!IsSupportedRequirementMethod(semanticModel, requirementArgument.Expression, out var requirementMethod))
             {
                 return RuleAnalysisIssue.UnsupportedArgument(
@@ -36,23 +45,29 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                     requirementArgument.Expression.ToString());
             }
 
-            if (!IsSupportedMessage(messageArgument))
+            var messageArgument = _argumentAnalyzer.FindArgument(semanticModel, invocation, 2);
+            if (messageArgument == null)
+            {
+                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
+            }
+
+            if (!IsSupportedMessage(semanticModel, messageArgument))
             {
                 return RuleAnalysisIssue.UnsupportedArgument(
                     messageArgument,
                     messageArgument.Expression.ToString());
             }
 
-            return CreateRule(member, requirementMethod, messageArgument);
+            var message = _argumentAnalyzer.GetMessage(semanticModel, messageArgument.Expression);
+
+            return CreateRule(member, requirementMethod, message);
         }
 
         private RuleAnalysisResult CreateRule(
             AnalyzedMemberAccess member,
             string requirementMethod,
-            ArgumentSyntax messageArgument)
+            string message)
         {
-            var message = messageArgument.Expression.ToString();
-
             return RuleAnalysisResult.ForRule(new RuleDefinition(
                 kind: RuleKind.Requires,
                 memberPath: member.Path,
@@ -74,14 +89,10 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             return invocation.ArgumentList.Arguments.Count == RuleShape.MinimumArgumentCount(RuleKind.Requires);
         }
 
-        private static bool IsSupportedMessage(ArgumentSyntax messageArgument)
+        private static bool IsSupportedMessage(SemanticModel semanticModel, ArgumentSyntax messageArgument)
         {
-            if (!(messageArgument.Expression is LiteralExpressionSyntax))
-            {
-                return false;
-            }
-
-            return true;
+            var constant = semanticModel.GetConstantValue(messageArgument.Expression);
+            return constant.HasValue;
         }
 
         private static bool IsSupportedRequirementMethod(
