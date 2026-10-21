@@ -1,12 +1,40 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Operations;
 using TinyValidations.SourceGen.Model;
 
 namespace TinyValidations.SourceGen.Analysis.RuleInvocations
 {
     internal sealed class RuleArgumentAnalyzer
     {
+        public ArgumentSyntax? FindArgument(
+            SemanticModel semanticModel,
+            InvocationExpressionSyntax invocation,
+            int parameterIndex)
+        {
+            var operation = semanticModel.GetOperation(invocation);
+            if (!(operation is IInvocationOperation call))
+            {
+                return null;
+            }
+
+            foreach (var argument in call.Arguments)
+            {
+                if (argument.ArgumentKind != ArgumentKind.Explicit)
+                {
+                    continue;
+                }
+
+                if (argument.Parameter?.Ordinal == parameterIndex)
+                {
+                    return argument.Syntax.FirstAncestorOrSelf<ArgumentSyntax>();
+                }
+            }
+
+            return null;
+        }
+
         public string GetRuleArgument(
             SemanticModel semanticModel,
             RuleKind kind,
@@ -18,7 +46,13 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             }
 
             var argumentIndex = RuleShape.ValueArgumentIndex(kind);
-            return GetArgument(semanticModel, invocation, argumentIndex);
+            var argument = FindArgument(semanticModel, invocation, argumentIndex);
+            if (argument == null)
+            {
+                return string.Empty;
+            }
+
+            return GetConstantArgument(semanticModel, argument.Expression);
         }
 
         public string GetMessage(
@@ -40,8 +74,13 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             }
 
             var argumentIndex = RuleShape.ValueArgumentIndex(kind);
-            var expression = invocation.ArgumentList.Arguments[argumentIndex].Expression;
-            var constant = semanticModel.GetConstantValue(expression);
+            var argument = FindArgument(semanticModel, invocation, argumentIndex);
+            if (argument == null)
+            {
+                return string.Empty;
+            }
+
+            var constant = semanticModel.GetConstantValue(argument.Expression);
 
             if (constant.Value == null)
             {
@@ -116,17 +155,10 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             return literal;
         }
 
-        private static string GetArgument(
+        private static string GetConstantArgument(
             SemanticModel semanticModel,
-            InvocationExpressionSyntax invocation,
-            int argumentIndex)
+            ExpressionSyntax expression)
         {
-            if (!HasArgument(invocation, argumentIndex))
-            {
-                return string.Empty;
-            }
-
-            var expression = invocation.ArgumentList.Arguments[argumentIndex].Expression;
             var constant = semanticModel.GetConstantValue(expression);
 
             var argument = CreateConstantArgument(constant.Value);
@@ -165,11 +197,6 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                 default:
                     return true;
             }
-        }
-
-        private static bool HasArgument(InvocationExpressionSyntax invocation, int argumentIndex)
-        {
-            return invocation.ArgumentList.Arguments.Count > argumentIndex;
         }
     }
 }

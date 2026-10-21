@@ -18,9 +18,11 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                 return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
             }
 
-            var selectorArgument = invocation.ArgumentList.Arguments[0];
-            var requirementArgument = invocation.ArgumentList.Arguments[1];
-            var messageArgument = invocation.ArgumentList.Arguments[2];
+            var selectorArgument = _argumentAnalyzer.FindArgument(semanticModel, invocation, 0);
+            if (selectorArgument == null)
+            {
+                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
+            }
 
             var member = AnalyzeSelector(selectorArgument);
             if (member == null)
@@ -30,11 +32,23 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                     selectorArgument.Expression.ToString());
             }
 
+            var requirementArgument = _argumentAnalyzer.FindArgument(semanticModel, invocation, 1);
+            if (requirementArgument == null)
+            {
+                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
+            }
+
             if (!IsSupportedRequirementMethod(semanticModel, requirementArgument.Expression, out var requirementMethod))
             {
                 return RuleAnalysisIssue.UnsupportedArgument(
                     requirementArgument,
                     requirementArgument.Expression.ToString());
+            }
+
+            var messageArgument = _argumentAnalyzer.FindArgument(semanticModel, invocation, 2);
+            if (messageArgument == null)
+            {
+                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
             }
 
             if (!IsSupportedMessage(semanticModel, messageArgument))

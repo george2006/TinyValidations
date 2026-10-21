@@ -21,7 +21,12 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                 return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
             }
 
-            var selectorArgument = invocation.ArgumentList.Arguments[0];
+            var selectorArgument = _argumentAnalyzer.FindArgument(semanticModel, invocation, 0);
+            if (selectorArgument == null)
+            {
+                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
+            }
+
             var member = AnalyzeSelector(selectorArgument);
             if (member == null)
             {
@@ -71,13 +76,13 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             InvocationExpressionSyntax invocation)
         {
             var messageArgumentIndex = RuleShape.MessageArgumentIndex(kind);
-            if (!HasArgument(invocation, messageArgumentIndex))
+            var argument = _argumentAnalyzer.FindArgument(semanticModel, invocation, messageArgumentIndex);
+            if (argument == null)
             {
                 return string.Empty;
             }
 
-            var expression = invocation.ArgumentList.Arguments[messageArgumentIndex].Expression;
-            return _argumentAnalyzer.GetMessage(semanticModel, expression);
+            return _argumentAnalyzer.GetMessage(semanticModel, argument.Expression);
         }
 
         private AnalyzedMemberAccess? AnalyzeSelector(ArgumentSyntax selectorArgument)
@@ -92,7 +97,7 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                 && count <= RuleShape.MaximumArgumentCount(kind);
         }
 
-        private static bool HasUnsupportedArgument(
+        private bool HasUnsupportedArgument(
             SemanticModel semanticModel,
             RuleKind kind,
             InvocationExpressionSyntax invocation)
@@ -105,7 +110,7 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             return HasUnsupportedMessageArgument(semanticModel, kind, invocation);
         }
 
-        private static bool HasUnsupportedValueArgument(
+        private bool HasUnsupportedValueArgument(
             SemanticModel semanticModel,
             RuleKind kind,
             InvocationExpressionSyntax invocation)
@@ -116,35 +121,35 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                 return false;
             }
 
-            var expression = invocation.ArgumentList.Arguments[valueArgumentIndex].Expression;
-            var constant = semanticModel.GetConstantValue(expression);
+            var argument = _argumentAnalyzer.FindArgument(semanticModel, invocation, valueArgumentIndex);
+            if (argument == null)
+            {
+                return true;
+            }
+
+            var constant = semanticModel.GetConstantValue(argument.Expression);
 
             return !constant.HasValue;
         }
 
-        private static bool HasUnsupportedMessageArgument(
+        private bool HasUnsupportedMessageArgument(
             SemanticModel semanticModel,
             RuleKind kind,
             InvocationExpressionSyntax invocation)
         {
             var messageArgumentIndex = RuleShape.MessageArgumentIndex(kind);
-            if (!HasArgument(invocation, messageArgumentIndex))
+            var argument = _argumentAnalyzer.FindArgument(semanticModel, invocation, messageArgumentIndex);
+            if (argument == null)
             {
                 return false;
             }
 
-            var expression = invocation.ArgumentList.Arguments[messageArgumentIndex].Expression;
-            var constant = semanticModel.GetConstantValue(expression);
+            var constant = semanticModel.GetConstantValue(argument.Expression);
 
             return !constant.HasValue;
         }
 
-        private static bool HasArgument(InvocationExpressionSyntax invocation, int argumentIndex)
-        {
-            return invocation.ArgumentList.Arguments.Count > argumentIndex;
-        }
-
-        private static bool HasInvalidRegexPattern(
+        private bool HasInvalidRegexPattern(
             SemanticModel semanticModel,
             RuleKind kind,
             InvocationExpressionSyntax invocation)
@@ -155,13 +160,13 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             }
 
             var argumentIndex = RuleShape.ValueArgumentIndex(kind);
-            if (!HasArgument(invocation, argumentIndex))
+            var argument = _argumentAnalyzer.FindArgument(semanticModel, invocation, argumentIndex);
+            if (argument == null)
             {
                 return true;
             }
 
-            var expression = invocation.ArgumentList.Arguments[argumentIndex].Expression;
-            var constant = semanticModel.GetConstantValue(expression);
+            var constant = semanticModel.GetConstantValue(argument.Expression);
             if (!(constant.Value is string pattern))
             {
                 return true;
