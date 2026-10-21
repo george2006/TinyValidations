@@ -30,7 +30,7 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                     selectorArgument.Expression.ToString());
             }
 
-            if (HasUnsupportedArgument(kind, invocation))
+            if (HasUnsupportedArgument(semanticModel, kind, invocation))
             {
                 return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
             }
@@ -49,8 +49,8 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             InvocationExpressionSyntax invocation,
             AnalyzedMemberAccess member)
         {
-            var argument = _argumentAnalyzer.GetRuleArgument(kind, invocation);
-            var argumentDisplay = _argumentAnalyzer.GetRuleArgumentDisplay(kind, invocation);
+            var argument = _argumentAnalyzer.GetRuleArgument(semanticModel, kind, invocation);
+            var argumentDisplay = _argumentAnalyzer.GetRuleArgumentDisplay(semanticModel, kind, invocation);
             var message = _argumentAnalyzer.GetMessage(kind, invocation);
             var comparisonTypeName = GetComparisonTypeName(semanticModel, kind, invocation, member);
 
@@ -77,9 +77,12 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                 && count <= RuleShape.MaximumArgumentCount(kind);
         }
 
-        private static bool HasUnsupportedArgument(RuleKind kind, InvocationExpressionSyntax invocation)
+        private static bool HasUnsupportedArgument(
+            SemanticModel semanticModel,
+            RuleKind kind,
+            InvocationExpressionSyntax invocation)
         {
-            if (HasUnsupportedValueArgument(kind, invocation))
+            if (HasUnsupportedValueArgument(semanticModel, kind, invocation))
             {
                 return true;
             }
@@ -87,7 +90,10 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             return HasUnsupportedMessageArgument(kind, invocation);
         }
 
-        private static bool HasUnsupportedValueArgument(RuleKind kind, InvocationExpressionSyntax invocation)
+        private static bool HasUnsupportedValueArgument(
+            SemanticModel semanticModel,
+            RuleKind kind,
+            InvocationExpressionSyntax invocation)
         {
             var valueArgumentIndex = RuleShape.ValueArgumentIndex(kind);
             if (valueArgumentIndex < 0)
@@ -95,7 +101,10 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                 return false;
             }
 
-            return !IsSupportedArgument(invocation, valueArgumentIndex);
+            var expression = invocation.ArgumentList.Arguments[valueArgumentIndex].Expression;
+            var constant = semanticModel.GetConstantValue(expression);
+
+            return !constant.HasValue;
         }
 
         private static bool HasUnsupportedMessageArgument(RuleKind kind, InvocationExpressionSyntax invocation)
@@ -106,10 +115,10 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                 return false;
             }
 
-            return !IsSupportedArgument(invocation, messageArgumentIndex);
+            return !IsLiteralArgument(invocation, messageArgumentIndex);
         }
 
-        private static bool IsSupportedArgument(InvocationExpressionSyntax invocation, int argumentIndex)
+        private static bool IsLiteralArgument(InvocationExpressionSyntax invocation, int argumentIndex)
         {
             if (!HasArgument(invocation, argumentIndex))
             {
