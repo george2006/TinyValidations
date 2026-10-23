@@ -31,7 +31,7 @@ namespace TinyValidations.SourceGen.Validation
         public static readonly DiagnosticDescriptor UnsupportedArgument = new DiagnosticDescriptor(
             "TV0004",
             "Validation rule argument is not supported",
-            "Validation rule argument '{0}' must be a constant value",
+            "Validation rule argument '{0}' is not supported",
             "TinyValidations",
             DiagnosticSeverity.Error,
             true);

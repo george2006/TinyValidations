@@ -216,6 +216,9 @@ public sealed class CreateUser
         var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0004", diagnostic.Id);
+        Assert.Equal(
+            "Validation rule argument 'rules.TextLengthAtLeast(x => x.Email, length)' is not supported",
+            diagnostic.GetMessage());
     }
 
     [Fact]
@@ -317,6 +320,9 @@ public sealed class CreateUser
         var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0004", diagnostic.Id);
+        Assert.Equal(
+            "Validation rule argument 'rules.Matches(x => x.Code, \"[\")' is not supported",
+            diagnostic.GetMessage());
     }
 
     [Theory]
@@ -411,6 +417,9 @@ public sealed class CreateOrder
         var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0004", diagnostic.Id);
+        Assert.Equal(
+            "Validation rule argument 'requirements.HasOrderPrefix' is not supported",
+            diagnostic.GetMessage());
     }
 
     [Fact]
