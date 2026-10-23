@@ -65,13 +65,21 @@ Analysis reads Roslyn syntax and symbols.
 
 It finds classes implementing `IValidation<T>` and reads calls made inside `Define`.
 
-Discovery first filters candidate class declarations. Analysis then uses Roslyn to bind each
-explicit argument to its parameter, including named and reordered arguments. Omitted optional
-messages remain absent so emission can supply the default message.
+Discovery first filters candidate class declarations.
 
-Rule values, patterns, and messages are resolved as compile-time constants. Generated argument
-expressions preserve constant types and conversions. Display text is kept separately so default
-messages do not contain casts used by generated checks.
+`MemberRuleInvocation` and `RequiresRuleInvocation` resolve the arguments, constant values, and
+symbols needed to analyze a single rule call. Both use `RuleArgumentBinder` to find explicit
+arguments by parameter, including named and reordered arguments. Omitted optional messages
+remain absent so emission can supply the default message.
+
+`MemberRuleAnalyzer` and `RequiresRuleAnalyzer` check the argument list, selector, and rule-specific
+constraints before creating a `RuleDefinition`. They return an analysis issue when a check fails.
+`Use<T>()` calls are handled separately by `CustomRuleAnalyzer`.
+
+Both member rule analyzers use `ConstantArgumentFormatter` to turn resolved constants into C#
+expressions and, where needed, display text. Generated expressions preserve constant types and
+conversions. Display text is kept separately so default messages do not contain casts used by
+generated checks.
 
 Analysis collects issues per declaration and excludes a declaration with issues as a whole.
 It continues examining the remaining declarations.

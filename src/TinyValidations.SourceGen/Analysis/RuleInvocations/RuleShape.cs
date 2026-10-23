@@ -15,7 +15,7 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                 || kind == RuleKind.Matches;
         }
 
-        public static int ValueArgumentIndex(RuleKind kind)
+        public static int ValueParameterOrdinal(RuleKind kind)
         {
             if (RequiresValueArgument(kind))
             {
@@ -25,7 +25,7 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
             return -1;
         }
 
-        public static int MessageArgumentIndex(RuleKind kind)
+        public static int MessageParameterOrdinal(RuleKind kind)
         {
             if (RequiresValueArgument(kind))
             {
