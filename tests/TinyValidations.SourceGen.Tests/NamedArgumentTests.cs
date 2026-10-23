@@ -9,31 +9,134 @@ public sealed class NamedArgumentTests
     {
         var rules = new[]
         {
-            new[] { "Required", "string", "", "", "\"ABC\"", "null" },
-            new[] { "HasText", "string", "", "", "\"ABC\"", "\" \"" },
-            new[] { "NotNull", "string", "", "", "\"ABC\"", "null" },
-            new[] { "HasItems", "string[]", "", "", "new[] { \"item\" }", "Array.Empty<string>()" },
-            new[] { "Email", "string", "", "", "\"a@example.com\"", "\"invalid\"" },
-            new[] { "TextLengthAtLeast", "string", "length", "Length", "\"ABC\"", "\"AB\"" },
-            new[] { "TextLengthAtMost", "string", "length", "Length", "\"ABC\"", "\"ABCD\"" },
-            new[] { "Above", "int", "value", "Threshold", "11", "10" },
-            new[] { "AtLeast", "int", "value", "Threshold", "10", "9" },
-            new[] { "Below", "int", "value", "Threshold", "9", "10" },
-            new[] { "AtMost", "int", "value", "Threshold", "10", "11" },
-            new[] { "Matches", "string", "pattern", "Pattern", "\"ABC\"", "\"invalid\"" },
-            new[] { "Requires", "string", "requirement", "Requirements.IsValid", "\"ABC\"", "\"invalid\"" }
+            new RuleCase
+            {
+                Name = "Required",
+                Type = "string",
+                ValidValue = "\"ABC\"",
+                InvalidValue = "null"
+            },
+            new RuleCase
+            {
+                Name = "HasText",
+                Type = "string",
+                ValidValue = "\"ABC\"",
+                InvalidValue = "\" \""
+            },
+            new RuleCase
+            {
+                Name = "NotNull",
+                Type = "string",
+                ValidValue = "\"ABC\"",
+                InvalidValue = "null"
+            },
+            new RuleCase
+            {
+                Name = "HasItems",
+                Type = "string[]",
+                ValidValue = "new[] { \"item\" }",
+                InvalidValue = "Array.Empty<string>()"
+            },
+            new RuleCase
+            {
+                Name = "Email",
+                Type = "string",
+                ValidValue = "\"a@example.com\"",
+                InvalidValue = "\"invalid\""
+            },
+            new RuleCase
+            {
+                Name = "TextLengthAtLeast",
+                Type = "string",
+                ValueParameter = "length",
+                ValueArgument = "Length",
+                ValidValue = "\"ABC\"",
+                InvalidValue = "\"AB\""
+            },
+            new RuleCase
+            {
+                Name = "TextLengthAtMost",
+                Type = "string",
+                ValueParameter = "length",
+                ValueArgument = "Length",
+                ValidValue = "\"ABC\"",
+                InvalidValue = "\"ABCD\""
+            },
+            new RuleCase
+            {
+                Name = "Above",
+                Type = "int",
+                ValueParameter = "value",
+                ValueArgument = "Threshold",
+                ValidValue = "11",
+                InvalidValue = "10"
+            },
+            new RuleCase
+            {
+                Name = "AtLeast",
+                Type = "int",
+                ValueParameter = "value",
+                ValueArgument = "Threshold",
+                ValidValue = "10",
+                InvalidValue = "9"
+            },
+            new RuleCase
+            {
+                Name = "Below",
+                Type = "int",
+                ValueParameter = "value",
+                ValueArgument = "Threshold",
+                ValidValue = "9",
+                InvalidValue = "10"
+            },
+            new RuleCase
+            {
+                Name = "AtMost",
+                Type = "int",
+                ValueParameter = "value",
+                ValueArgument = "Threshold",
+                ValidValue = "10",
+                InvalidValue = "11"
+            },
+            new RuleCase
+            {
+                Name = "Matches",
+                Type = "string",
+                ValueParameter = "pattern",
+                ValueArgument = "Pattern",
+                ValidValue = "\"ABC\"",
+                InvalidValue = "\"invalid\""
+            },
+            new RuleCase
+            {
+                Name = "Requires",
+                Type = "string",
+                ValueParameter = "requirement",
+                ValueArgument = "Requirements.IsValid",
+                ValidValue = "\"ABC\"",
+                InvalidValue = "\"invalid\""
+            }
         };
 
         foreach (var rule in rules)
         {
             foreach (var form in new[] { "positional", "named", "reordered", "mixed", "parenthesized", "default-message" })
             {
-                if (rule[0] == "Requires" && form == "default-message")
+                if (rule.Name == "Requires" && form == "default-message")
                 {
                     continue;
                 }
 
-                yield return new object[] { rule[0], rule[1], rule[2], rule[3], rule[4], rule[5], form };
+                yield return new object[]
+                {
+                    rule.Name,
+                    rule.Type,
+                    rule.ValueParameter,
+                    rule.ValueArgument,
+                    rule.ValidValue,
+                    rule.InvalidValue,
+                    form
+                };
             }
         }
     }
@@ -247,5 +350,15 @@ public static class Requirements
     public static bool IsValid(string value) => value == "ABC";
 }
 """;
+    }
+
+    private sealed class RuleCase
+    {
+        public required string Name { get; init; }
+        public required string Type { get; init; }
+        public string ValueParameter { get; init; } = string.Empty;
+        public string ValueArgument { get; init; } = string.Empty;
+        public required string ValidValue { get; init; }
+        public required string InvalidValue { get; init; }
     }
 }
