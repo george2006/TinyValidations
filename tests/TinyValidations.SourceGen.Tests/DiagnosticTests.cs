@@ -154,6 +154,44 @@ public sealed class CreateUser
         Assert.Equal("TV0003", diagnostic.Id);
     }
 
+    [Theory]
+    [InlineData(
+        "Matches(x => x.Code.Trim(), RuntimePattern, RuntimeMessage)",
+        "x => x.Code.Trim()")]
+    [InlineData(
+        "Matches(message: RuntimeMessage, pattern: RuntimePattern, member: x => x.Code.Trim())",
+        "member: x => x.Code.Trim()")]
+    public void Reports_selector_error_before_invalid_value_and_message_arguments(string ruleCall, string selector)
+    {
+        var source = $$"""
+using TinyValidations;
+
+public sealed record CreateItem(string Code);
+
+public sealed class CreateItemValidation : IValidation<CreateItem>
+{
+    private static readonly string RuntimePattern = "^[A-Z]+$";
+    private static readonly string RuntimeMessage = "Invalid code.";
+
+    public void Define(ValidationRules<CreateItem> rules)
+    {
+        rules.{{ruleCall}};
+    }
+}
+""";
+
+        var result = SourceGeneratorTestHost.Run(source);
+        var diagnostic = result.SingleDiagnostic();
+        var selectorStart = source.IndexOf(selector, StringComparison.Ordinal);
+
+        result.ShouldHaveNoCompilationErrors();
+        result.ShouldGenerateNoSource();
+        Assert.Equal("TV0003", diagnostic.Id);
+        Assert.Equal(Microsoft.CodeAnalysis.DiagnosticSeverity.Error, diagnostic.Severity);
+        Assert.Equal(selectorStart, diagnostic.Location.SourceSpan.Start);
+        Assert.Equal(selector.Length, diagnostic.Location.SourceSpan.Length);
+    }
+
     [Fact]
     public void Reports_error_when_argument_is_not_literal()
     {
@@ -279,6 +317,66 @@ public sealed class CreateUser
         var diagnostic = SingleDiagnosticWithNoSource(source);
 
         Assert.Equal("TV0004", diagnostic.Id);
+    }
+
+    [Theory]
+    [InlineData(
+        "Requires(x => x.Code.Trim(), requirements.IsValid, RuntimeMessage)",
+        "TV0003", "x => x.Code.Trim()")]
+    [InlineData(
+        "Requires(message: RuntimeMessage, requirement: requirements.IsValid, member: x => x.Code.Trim())",
+        "TV0003", "member: x => x.Code.Trim()")]
+    [InlineData(
+        "Requires(x => x.Code, requirements.IsValid, RuntimeMessage)",
+        "TV0004", "requirements.IsValid")]
+    [InlineData(
+        "Requires(message: RuntimeMessage, requirement: requirements.IsValid, member: x => x.Code)",
+        "TV0004", "requirement: requirements.IsValid")]
+    [InlineData(
+        "Requires(x => x.Code, Requirements.Accepts, RuntimeMessage)",
+        "TV0004", "RuntimeMessage")]
+    [InlineData(
+        "Requires(message: RuntimeMessage, requirement: Requirements.Accepts, member: x => x.Code)",
+        "TV0004", "message: RuntimeMessage")]
+    public void Reports_requires_errors_in_validation_order_at_the_failing_argument(
+        string ruleCall,
+        string diagnosticId,
+        string argument)
+    {
+        var source = $$"""
+using TinyValidations;
+
+public sealed record CreateItem(string Code);
+
+public sealed class CreateItemValidation : IValidation<CreateItem>
+{
+    private static readonly string RuntimeMessage = "Invalid code.";
+
+    public void Define(ValidationRules<CreateItem> rules)
+    {
+        var requirements = new Requirements();
+        rules.{{ruleCall}};
+    }
+}
+
+public sealed class Requirements
+{
+    public bool IsValid(string value) => value.Length > 0;
+    public static bool Accepts(string value) => value.Length > 0;
+}
+""";
+
+        var result = SourceGeneratorTestHost.Run(source);
+        var diagnostic = result.SingleDiagnostic();
+        var invocationStart = source.IndexOf(ruleCall, StringComparison.Ordinal);
+        var argumentStart = source.IndexOf(argument, invocationStart, StringComparison.Ordinal);
+
+        result.ShouldHaveNoCompilationErrors();
+        result.ShouldGenerateNoSource();
+        Assert.Equal(diagnosticId, diagnostic.Id);
+        Assert.Equal(Microsoft.CodeAnalysis.DiagnosticSeverity.Error, diagnostic.Severity);
+        Assert.Equal(argumentStart, diagnostic.Location.SourceSpan.Start);
+        Assert.Equal(argument.Length, diagnostic.Location.SourceSpan.Length);
     }
 
     [Fact]

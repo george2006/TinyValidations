@@ -7,68 +7,100 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
     internal sealed class RequiresRuleAnalyzer
     {
         private readonly MemberAccessAnalyzer _memberAccessAnalyzer = new MemberAccessAnalyzer();
-        private readonly RuleArgumentAnalyzer _argumentAnalyzer = new RuleArgumentAnalyzer();
+        private readonly ConstantArgumentFormatter _argumentFormatter = new ConstantArgumentFormatter();
 
         public RuleAnalysisResult Analyze(
             SemanticModel semanticModel,
             InvocationExpressionSyntax invocation)
         {
-            if (!HasSupportedArgumentCount(invocation))
+            var call = new RequiresRuleInvocation(semanticModel, invocation);
+
+            var argumentIssue = ValidateArgumentList(call);
+            if (argumentIssue != null)
             {
-                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
+                return argumentIssue;
             }
 
-            var selectorArgument = _argumentAnalyzer.FindArgument(semanticModel, invocation, 0);
-            if (selectorArgument == null)
-            {
-                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
-            }
-
-            var member = AnalyzeSelector(selectorArgument);
+            var member = AnalyzeMember(call);
             if (member == null)
             {
-                return RuleAnalysisIssue.UnsupportedSelector(
-                    selectorArgument,
-                    selectorArgument.Expression.ToString());
+                return UnsupportedSelector(call);
             }
 
-            var requirementArgument = _argumentAnalyzer.FindArgument(semanticModel, invocation, 1);
-            if (requirementArgument == null)
+            var requirementIssue = ValidateRequirement(call);
+            if (requirementIssue != null)
             {
-                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
+                return requirementIssue;
             }
 
-            if (!IsSupportedRequirementMethod(semanticModel, requirementArgument.Expression, out var requirementMethod))
+            var messageIssue = ValidateMessage(call);
+            if (messageIssue != null)
             {
-                return RuleAnalysisIssue.UnsupportedArgument(
-                    requirementArgument,
-                    requirementArgument.Expression.ToString());
+                return messageIssue;
             }
 
-            var messageArgument = _argumentAnalyzer.FindArgument(semanticModel, invocation, 2);
-            if (messageArgument == null)
+            return CreateRule(call, member);
+        }
+
+        private static RuleAnalysisResult? ValidateArgumentList(RequiresRuleInvocation call)
+        {
+            if (!HasSupportedArgumentCount(call))
             {
-                return RuleAnalysisIssue.UnsupportedArgument(invocation, invocation.ToString());
+                return UnsupportedArgument(call);
             }
 
-            if (!IsSupportedMessage(semanticModel, messageArgument))
+            if (call.SelectorArgument == null)
             {
-                return RuleAnalysisIssue.UnsupportedArgument(
-                    messageArgument,
-                    messageArgument.Expression.ToString());
+                return UnsupportedArgument(call);
             }
 
-            var message = _argumentAnalyzer.GetMessage(semanticModel, messageArgument.Expression);
+            return null;
+        }
 
-            return CreateRule(member, requirementMethod, message);
+        private AnalyzedMemberAccess? AnalyzeMember(RequiresRuleInvocation call)
+        {
+            var selector = call.SelectorArgument!.Expression;
+            return _memberAccessAnalyzer.Analyze(selector);
+        }
+
+        private static RuleAnalysisResult? ValidateRequirement(RequiresRuleInvocation call)
+        {
+            if (call.RequirementArgument == null)
+            {
+                return UnsupportedArgument(call);
+            }
+
+            if (!IsSupportedRequirementMethod(call.RequirementMethod))
+            {
+                return UnsupportedRequirement(call);
+            }
+
+            return null;
+        }
+
+        private static RuleAnalysisResult? ValidateMessage(RequiresRuleInvocation call)
+        {
+            if (call.MessageArgument == null)
+            {
+                return UnsupportedArgument(call);
+            }
+
+            if (!call.MessageConstant.HasValue)
+            {
+                return UnsupportedMessage(call);
+            }
+
+            return null;
         }
 
         private RuleAnalysisResult CreateRule(
-            AnalyzedMemberAccess member,
-            string requirementMethod,
-            string message)
+            RequiresRuleInvocation call,
+            AnalyzedMemberAccess member)
         {
-            return RuleAnalysisResult.ForRule(new RuleDefinition(
+            var requirementMethod = GetRequirementMethodName(call.RequirementMethod!);
+            var message = _argumentFormatter.FormatExpression(call.MessageConstant.Value);
+
+            var rule = new RuleDefinition(
                 kind: RuleKind.Requires,
                 memberPath: member.Path,
                 memberAccess: member.Access,
@@ -76,35 +108,19 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                 argumentDisplay: string.Empty,
                 message: message,
                 customRuleType: string.Empty,
-                requirementMethod: requirementMethod));
+                requirementMethod: requirementMethod);
+
+            return RuleAnalysisResult.ForRule(rule);
         }
 
-        private AnalyzedMemberAccess? AnalyzeSelector(ArgumentSyntax selectorArgument)
+        private static bool HasSupportedArgumentCount(RequiresRuleInvocation call)
         {
-            return _memberAccessAnalyzer.Analyze(selectorArgument.Expression);
+            return call.Syntax.ArgumentList.Arguments.Count == RuleShape.MinimumArgumentCount(RuleKind.Requires);
         }
 
-        private static bool HasSupportedArgumentCount(InvocationExpressionSyntax invocation)
+        private static bool IsSupportedRequirementMethod(IMethodSymbol? method)
         {
-            return invocation.ArgumentList.Arguments.Count == RuleShape.MinimumArgumentCount(RuleKind.Requires);
-        }
-
-        private static bool IsSupportedMessage(SemanticModel semanticModel, ArgumentSyntax messageArgument)
-        {
-            var constant = semanticModel.GetConstantValue(messageArgument.Expression);
-            return constant.HasValue;
-        }
-
-        private static bool IsSupportedRequirementMethod(
-            SemanticModel semanticModel,
-            ExpressionSyntax expression,
-            out string requirementMethod)
-        {
-            requirementMethod = string.Empty;
-
-            var symbolInfo = semanticModel.GetSymbolInfo(expression);
-            var symbol = symbolInfo.Symbol ?? GetSingleCandidate(symbolInfo);
-            if (!(symbol is IMethodSymbol method))
+            if (method == null)
             {
                 return false;
             }
@@ -124,29 +140,40 @@ namespace TinyValidations.SourceGen.Analysis.RuleInvocations
                 return false;
             }
 
-            if (method.ReturnType.SpecialType != SpecialType.System_Boolean)
-            {
-                return false;
-            }
-
-            requirementMethod = GetRequirementMethodName(method);
-            return true;
-        }
-
-        private static ISymbol? GetSingleCandidate(SymbolInfo symbolInfo)
-        {
-            if (symbolInfo.CandidateSymbols.Length != 1)
-            {
-                return null;
-            }
-
-            return symbolInfo.CandidateSymbols[0];
+            return method.ReturnType.SpecialType == SpecialType.System_Boolean;
         }
 
         private static string GetRequirementMethodName(IMethodSymbol method)
         {
             var containingType = method.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             return containingType + "." + method.Name;
+        }
+
+        private static RuleAnalysisResult UnsupportedArgument(RequiresRuleInvocation call)
+        {
+            var argument = call.Syntax.ToString();
+            return RuleAnalysisIssue.UnsupportedArgument(call.Syntax, argument);
+        }
+
+        private static RuleAnalysisResult UnsupportedSelector(RequiresRuleInvocation call)
+        {
+            var selector = call.SelectorArgument!;
+            var expression = selector.Expression.ToString();
+            return RuleAnalysisIssue.UnsupportedSelector(selector, expression);
+        }
+
+        private static RuleAnalysisResult UnsupportedRequirement(RequiresRuleInvocation call)
+        {
+            var requirement = call.RequirementArgument!;
+            var expression = requirement.Expression.ToString();
+            return RuleAnalysisIssue.UnsupportedArgument(requirement, expression);
+        }
+
+        private static RuleAnalysisResult UnsupportedMessage(RequiresRuleInvocation call)
+        {
+            var message = call.MessageArgument!;
+            var expression = message.Expression.ToString();
+            return RuleAnalysisIssue.UnsupportedArgument(message, expression);
         }
     }
 }
