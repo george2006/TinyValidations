@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Reorganized rule analysis to separate argument resolution, rule checks, and constant formatting while preserving supported declarations and generated validation behavior.
+
+### Fixed
+
+- `TV0004` no longer incorrectly states that every unsupported argument must be a constant, including invalid regex patterns and unsupported requirement methods.
+
 ## 1.1.0-beta.3 - 2026-10-21
 
 ### Added
